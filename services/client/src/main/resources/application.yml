@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: client
+  datasource:
+    url: r2dbc:postgresql://client_db/${CLIENT_POSTGRES_DB}
+    username: ${CLIENT_POSTGRES_USER}
+    password: ${CLIENT_POSTGRES_PASSWORD}
+server:
+  port: 8080
+
+jwt:
+  secret: ${SPRING_JWT_SECRET}
+  expiration: 3600000

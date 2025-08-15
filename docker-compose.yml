@@ -1,0 +1,58 @@
+services:
+  client_db:
+    image: postgres:15
+    container_name: postgres-db
+    restart: always
+    environment:
+      POSTGRES_USER: ${CLIENT_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${CLIENT_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${CLIENT_POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # banking_db:
+  #   image: postgres:15
+  #   container_name: postgres-banking-db
+  #   restart: always
+  #   environment:
+  #     POSTGRES_USER: ${BANKING_POSTGRES_USER}
+  #     POSTGRES_PASSWORD: ${BANKING_POSTGRES_PASSWORD}
+  #     POSTGRES_DB: ${BANKING_POSTGRES_DB}
+  #   ports:
+  #     - "5433:5432"
+  #   volumes:
+  #     - banking_postgres_data:/var/lib/postgresql/data
+
+  client-service:
+    build: ./services/client
+    container_name: cleint-service
+    restart: always
+    depends_on:
+      - client_db
+    environment:
+      SPRING_DATASOURCE_URL: r2dbc:postgresql://client_db/${CLIENT_POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${CLIENT_POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${CLIENT_POSTGRES_PASSWORD}
+      SPRING_JWT_SECRET: ${JWT_SECRET}
+      SERVER_PORT: "8080"
+    ports:
+      - "8081:8080"
+
+  # banking-service:
+  #   build: ./services/banking
+  #   container_name: banking-service
+  #   restart: always
+  #   depends_on:
+  #     - banking_db
+  #   environment:
+  #     SPRING_DATASOURCE_URL: r2dbc:postgresql://banking_db/${BANKING_POSTGRES_DB}
+  #     SPRING_DATASOURCE_USERNAME: ${BANKING_POSTGRES_USER}
+  #     SPRING_DATASOURCE_PASSWORD: ${BANKING_POSTGRES_PASSWORD}
+  #     SERVER_PORT: "8080"
+  #   ports:
+  #     - "8080:8080"
+
+volumes:
+  postgres_data:
