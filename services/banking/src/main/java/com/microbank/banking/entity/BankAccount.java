@@ -1,26 +1,29 @@
-package com.microbank.client.entity;
+package com.microbank.banking.entity;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 
 @Data
 @AllArgsConstructor
 @Builder
-@Table(name = "blacklisted_tokens")
-public class BlacklistedToken {
-    @Id
+@Setter
+@Getter
+@Table("bank_accounts")
+public class BankAccount {
     private UUID id;
     @NonNull
-    private String token;
-    private UUID userId;
+    private String accountNumber;
+    @NonNull
+    private UUID accountHolderId;
+    private double balance;
     private LocalDateTime createdAt;
-
 }

@@ -9,3 +9,11 @@ CREATE TABLE IF NOT EXISTS users (
     blacklisted BOOLEAN DEFAULT FALSE,
     role VARCHAR(50) NOT NULL CHECK (role IN ('USER', 'ADMIN')) DEFAULT 'USER'
 );
+
+CREATE TABLE IF NOT EXISTS blacklisted_tokens (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL,
+    token VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+)

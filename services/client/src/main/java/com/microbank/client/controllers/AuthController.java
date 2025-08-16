@@ -1,6 +1,7 @@
 package com.microbank.client.controllers;
 
 import java.time.Duration;
+import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -50,16 +51,16 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public Mono<ResponseEntity<Void>> logout(ServerHttpResponse response) {
-        return authService.logout(AUTH_TOKEN_COOKIE_NAME)
-                .doOnSuccess(aVoid -> {
+    public Mono<ResponseEntity<Void>> logout(@RequestBody UUID userId, ServerHttpResponse response) {
+        return authService.logout(AUTH_TOKEN_COOKIE_NAME, userId)
+                .doOnSuccess(aVoid -> 
                     response.addCookie(ResponseCookie.from(AUTH_TOKEN_COOKIE_NAME, "")
                             .httpOnly(true)
                             .secure(true)
                             .path("/")
                             .maxAge(0)
-                            .build());
-                })
+                            .build())
+                )
                 .thenReturn(ResponseEntity.ok().build());
     }
 }

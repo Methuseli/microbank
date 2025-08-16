@@ -1,5 +1,7 @@
 package com.microbank.client.services;
 
+import java.util.UUID;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.microbank.client.entity.BlacklistedToken;
@@ -47,8 +49,9 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public Mono<Void> logout(String token) {
-        return blacklistedTokenRepository.save(BlacklistedToken.builder().token(token).build())
+    public Mono<Void> logout(String token, UUID userId) {
+        return blacklistedTokenRepository.save(BlacklistedToken.builder().token(token).userId(userId).build())
                 .then(Mono.empty());
     }
 }
+    

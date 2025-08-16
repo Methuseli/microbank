@@ -1,4 +1,4 @@
-package com.microbank.client.config;
+package com.microbank.banking.config;
 
 // import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -43,3 +43,4 @@ public class R2DBCConfig {
     }
 
 }
+
