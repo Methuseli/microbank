@@ -12,10 +12,12 @@ interface DefaultFieldProps {
   errorClassName: string;
   onChange?: any;
   value?: any;
+  onBlur?: any; // add so Formik can pass
   passwordToggleClassName?: string;
   passwordToggleIcon?: React.ReactNode;
   onClickPasswordToggle?: () => void;
-
+  errorMessage?: string; // <-- new
+  step?: string;
 }
 
 const DefaultField = (props: Readonly<DefaultFieldProps>) => {
@@ -32,12 +34,17 @@ const DefaultField = (props: Readonly<DefaultFieldProps>) => {
     placeholder,
     errorClassName,
     onChange,
+    onBlur,
     value,
     passwordToggleClassName,
     passwordToggleIcon,
-    onClickPasswordToggle
+    onClickPasswordToggle,
+    errorMessage,
+    step
   } = props;
 
+
+  console.log("Error message: ", name, " ", errorMessage);
   return (
     <div
       className={fieldGroupClassName}
@@ -51,11 +58,15 @@ const DefaultField = (props: Readonly<DefaultFieldProps>) => {
             name={name}
             required={required}
             onChange={onChange}
-            className={inputClassName}
+            className={`${inputClassName}${
+                          errorMessage ? 'border-red-300 bg-red-50' : 'border-gray-200 hover:border-gray-300'
+                        }`}
             placeholder={placeholder}
+            onBlur={onBlur}
             value={value}
+            step={type === "number" ? step : undefined}
           />
-          {type === "password" && <button
+          {(name === "password" || name === "confirmPassword") && <button
             type="button"
             onClick={onClickPasswordToggle}
             className={passwordToggleClassName}
@@ -63,9 +74,7 @@ const DefaultField = (props: Readonly<DefaultFieldProps>) => {
             {passwordToggleIcon}
           </button>}
         </div>
-        {
-          <p className={errorClassName}> </p>
-        }
+        {errorMessage && <p className={errorClassName}>{errorMessage}</p>}
       </div>
     </div>
   );

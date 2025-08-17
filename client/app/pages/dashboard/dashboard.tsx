@@ -8,132 +8,102 @@ import {
     Plus,
     Minus,
     Eye,
-    EyeOff,
-    RefreshCw
+    EyeOff
 } from 'lucide-react';
-import type { User, Transaction } from "~/types";
+import type { Transaction, BankAccount } from "~/types";
+import axios from "axios";
+import { bankingUrl } from '~/config';
+import { useAuth } from '~/context/AuthContext';
+import { Form, Formik } from 'formik';
+import { transactionSchema } from '~/schema/transation';
+import FormController from '~/utils/FormController';
+import { getTransactionForm } from '~/utils/forms/transaction';
+import { Bounce, toast, ToastContainer } from 'react-toastify';
+import { Navigate, useNavigate } from 'react-router';
 
 const Dashboard: React.FC = () => {
     const [showBalance, setShowBalance] = useState(true);
-    const [activeTab, setActiveTab] = useState<'deposit' | 'withdrawal'>('deposit');
-    const [amount, setAmount] = useState('');
-    const [description, setDescription] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+    const [activeTab, setActiveTab] = useState<'deposit' | 'withdraw'>('deposit');
     const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [error, setError] = useState('');
-    const [user, setUser] = useState<User>({
+    const navigate = useNavigate();
+
+    const { user, logout } = useAuth();
+    const [bankAccount, setBankAccount] = useState<BankAccount>({
         id: '1',
-        name: 'John Doe',
-        email: 'john.doe@example.com',
-        balance: 1000,
-        isBlacklisted: false,
-        createdAt: new Date().toISOString(),
-        isAdmin: false
+        userId: '',
+        accountNumber: '',
+        balance: 0.0,
+        createdAt: new Date().toISOString()
     });
 
-    const onLogout = () => {
-        setUser({
-            id: '1',
-            name: 'John Doe',
-            email: 'john.doe@example.com',
-            balance: 1000,
-            isBlacklisted: false,
-            createdAt: new Date().toISOString(),
-            isAdmin: false,
-        });
-    };
+    useEffect(() => {
+        if (!user) return;
+        axios.get(`${bankingUrl}bank-accounts/${user.id}`, { withCredentials: true })
+            .then(response => {
+                setBankAccount(response.data);
+            })
+            .catch(error => {
+                console.error('Error fetching bank account:', error);
+            });
+    }, [user])
 
     // Mock transaction data
     useEffect(() => {
-        const mockTransactions: Transaction[] = [
-            {
-                id: '1',
-                userId: user.id,
-                transactionType: 'deposit',
-                amount: 500,
-                timestamp: '2024-01-15T10:30:00Z',
-                description: 'Initial deposit',
-                status: 'completed'
-            },
-            {
-                id: '2',
-                userId: user.id,
-                transactionType: 'withdrawal',
-                amount: 150,
-                timestamp: '2024-01-14T14:20:00Z',
-                description: 'ATM withdrawal',
-                status: 'completed'
-            },
-            {
-                id: '3',
-                userId: user.id,
-                transactionType: 'deposit',
-                amount: 1200,
-                timestamp: '2024-01-13T09:15:00Z',
-                description: 'Salary deposit',
-                status: 'completed'
-            },
-            {
-                id: '4',
-                userId: user.id,
-                transactionType: 'withdrawal',
-                amount: 75,
-                timestamp: '2024-01-12T16:45:00Z',
-                description: 'Online purchase',
-                status: 'completed'
-            }
-        ];
-        setTransactions(mockTransactions);
-    }, [user.id]);
+        if (bankAccount.id === "1") return;
+        axios.get(`${bankingUrl}bank-accounts/${bankAccount?.id}/transactions`, { withCredentials: true })
+            .then(response => {
+                setTransactions(response.data);
+            })
+            .catch(error => {
+                console.error('Error fetching transactions:', error);
+            });
+    }, [bankAccount]);
 
-    const handleTransaction = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError('');
-
-        if (user.isBlacklisted) {
-            setError('Your account has been blacklisted. Please contact support.');
-            return;
+    const handleTransaction = (values: { amount: number; description: string; activeTab: 'deposit' | 'withdraw' },
+        {
+            setSubmitting,
+            setFieldError,
+            resetForm,
+        }: {
+            setSubmitting: (s: boolean) => void;
+            setFieldError: (field: string, message: string | undefined) => void;
+            resetForm: () => void;
         }
-
-        if (!amount || parseFloat(amount) <= 0) {
-            setError('Please enter a valid amount');
-            return;
-        }
-
-        if (activeTab === 'withdrawal' && parseFloat(amount) > user.balance) {
-            setError('Insufficient funds');
-            return;
-        }
-
-        setIsLoading(true);
-
-        // Simulate API call
-        setTimeout(() => {
-            const newTransaction: Transaction = {
-                id: Date.now().toString(),
-                userId: user.id,
-                transactionType: activeTab,
-                amount: parseFloat(amount),
-                timestamp: new Date().toISOString(),
-                description: description || `${activeTab === 'deposit' ? 'Deposit' : 'Withdrawal'} transaction`,
-                status: 'completed'
-            };
-
-            setTransactions(prev => [newTransaction, ...prev]);
-            setAmount('');
-            setDescription('');
-            setIsLoading(false);
-
-            // In a real app, you'd update the user's balance here
-            console.log('Transaction completed:', newTransaction);
-        }, 1500);
+    ) => {
+        setSubmitting(true);
+        const url = `${bankingUrl}bank-accounts/${bankAccount?.id}/${activeTab}`;
+        axios
+            .patch(url, { amount: values.amount, description: values.description }, { withCredentials: true })
+            .then(response => {
+                if (response.status === 200) {
+                    toast.success("Transaction was successful!!!");
+                    setBankAccount(response.data);
+                }
+            })
+            .catch(error => {
+                toast.error("Transaction failed....");
+                if (error.response) {
+                    const { field, message } = error.response.data;
+                    setFieldError(field, message);
+                }
+            })
+            .finally(() => {
+                setSubmitting(false)
+            });
     };
 
+    if (!user) {
+        return <Navigate to="/" />;
+    }
+
     const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD'
-        }).format(amount);
+        if (amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD'
+            }).format(amount);
+        }
+        return "Funds"
     };
 
     const formatDate = (dateString: string) => {
@@ -146,7 +116,11 @@ const Dashboard: React.FC = () => {
         });
     };
 
-    if (user.isBlacklisted) {
+    const buttonText = () => {
+        return activeTab === 'deposit' ? 'Deposit' : 'Withdraw';
+    }
+
+    if (user?.blacklisted) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
                 <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
@@ -158,7 +132,7 @@ const Dashboard: React.FC = () => {
                         Your account has been temporarily restricted. Please contact our support team for assistance.
                     </p>
                     <button
-                        onClick={onLogout}
+                        onClick={logout}
                         className="w-full bg-red-600 text-white py-3 px-4 rounded-xl hover:bg-red-700 transition-colors duration-200"
                     >
                         Sign Out
@@ -182,10 +156,18 @@ const Dashboard: React.FC = () => {
                         </div>
                         <div className="flex items-center space-x-4">
                             <span className="text-sm text-gray-600">
-                                Welcome, {user.name}
+                                Welcome, {user?.name}
                             </span>
+                            {user?.role === "ADMIN" && <button
+                                onClick={() => {
+                                    navigate("/admin")
+                                }}
+                                className="text-sm text-green-500 hover:text-green-700 transition-colors duration-200"
+                            >
+                                Admin
+                            </button>}
                             <button
-                                onClick={onLogout}
+                                onClick={logout}
                                 className="text-sm text-gray-500 hover:text-gray-700 transition-colors duration-200"
                             >
                                 Sign Out
@@ -210,7 +192,7 @@ const Dashboard: React.FC = () => {
                                 </button>
                             </div>
                             <div className="text-3xl font-bold mb-2">
-                                {showBalance ? formatCurrency(user.balance) : '••••••'}
+                                {showBalance ? formatCurrency(bankAccount?.balance) : '••••••'}
                             </div>
                             <p className="text-blue-100 text-sm">Available Balance</p>
                         </div>
@@ -221,79 +203,63 @@ const Dashboard: React.FC = () => {
                                 <button
                                     onClick={() => setActiveTab('deposit')}
                                     className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === 'deposit'
-                                            ? 'bg-white text-green-600 shadow-sm'
-                                            : 'text-gray-600 hover:text-gray-800'
+                                        ? 'bg-white text-green-600 shadow-sm'
+                                        : 'text-gray-600 hover:text-gray-800'
                                         }`}
                                 >
                                     <Plus className="w-4 h-4 inline mr-2" />
                                     Deposit
                                 </button>
                                 <button
-                                    onClick={() => setActiveTab('withdrawal')}
-                                    className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === 'withdrawal'
-                                            ? 'bg-white text-red-600 shadow-sm'
-                                            : 'text-gray-600 hover:text-gray-800'
+                                    onClick={() => setActiveTab('withdraw')}
+                                    className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === 'withdraw'
+                                        ? 'bg-white text-red-600 shadow-sm'
+                                        : 'text-gray-600 hover:text-gray-800'
                                         }`}
                                 >
                                     <Minus className="w-4 h-4 inline mr-2" />
                                     Withdraw
                                 </button>
                             </div>
+                            <Formik
+                                initialValues={{ amount: 0, description: '', activeTab: activeTab }}
+                                validationSchema={transactionSchema}
+                                onSubmit={handleTransaction}
+                            >
+                                {({ values, errors, touched, handleChange, handleBlur, isSubmitting, isValid }) => {
+                                    const transactionForm = getTransactionForm({
+                                        values,
+                                        errors,
+                                        touched,
+                                        handleChange,
+                                        handleBlur
+                                    });
 
-                            <form onSubmit={handleTransaction} className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Amount
-                                    </label>
-                                    <div className="relative">
-                                        <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            value={amount}
-                                            onChange={(e) => setAmount(e.target.value)}
-                                            className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            placeholder="0.00"
-                                            required
-                                        />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Description (Optional)
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={description}
-                                        onChange={(e) => setDescription(e.target.value)}
-                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                        placeholder="Transaction description"
-                                    />
-                                </div>
-
-                                {error && (
-                                    <div className="bg-red-50 border border-red-200 rounded-xl p-3">
-                                        <p className="text-red-600 text-sm">{error}</p>
-                                    </div>
-                                )}
-
-                                <button
-                                    type="submit"
-                                    disabled={isLoading}
-                                    className={`w-full py-3 px-4 rounded-xl font-semibold transition-all duration-200 ${activeTab === 'deposit'
-                                            ? 'bg-green-600 hover:bg-green-700 text-white'
-                                            : 'bg-red-600 hover:bg-red-700 text-white'
-                                        } disabled:opacity-50 disabled:cursor-not-allowed`}
-                                >
-                                    {isLoading ? (
-                                        <RefreshCw className="w-4 h-4 animate-spin mx-auto" />
-                                    ) : (
-                                        `${activeTab === 'deposit' ? 'Deposit' : 'Withdraw'} ${amount ? formatCurrency(parseFloat(amount)) : 'Funds'}`
-                                    )}
-                                </button>
-                            </form>
+                                    return (
+                                        <Form className="space-y-4">
+                                            <FormController
+                                                formData={[
+                                                    ...transactionForm,
+                                                    {
+                                                        type: "submit",
+                                                        text: isSubmitting ? (
+                                                            "Loading"
+                                                        ) : (
+                                                            `${buttonText()} ${formatCurrency(bankAccount?.balance)}`
+                                                        ),
+                                                        buttonClassName: `w-full py-3 px-4 rounded-xl font-semibold transition-all duration-200 ${activeTab === 'deposit'
+                                                            ? 'bg-green-600 hover:bg-green-700 text-white'
+                                                            : 'bg-red-600 hover:bg-red-700 text-white'
+                                                            } disabled:opacity-50 disabled:cursor-not-allowed`,
+                                                        spanClassName: "flex items-center justify-center",
+                                                        icon: false,
+                                                        disabled: isSubmitting || !isValid
+                                                    }
+                                                ]} />
+                                        </Form>
+                                    );
+                                }}
+                            </Formik>
                         </div>
                     </div>
 
@@ -318,8 +284,8 @@ const Dashboard: React.FC = () => {
                                             >
                                                 <div className="flex items-center">
                                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center mr-4 ${transaction.transactionType === 'deposit'
-                                                            ? 'bg-green-100 text-green-600'
-                                                            : 'bg-red-100 text-red-600'
+                                                        ? 'bg-green-100 text-green-600'
+                                                        : 'bg-red-100 text-red-600'
                                                         }`}>
                                                         {transaction.transactionType === 'deposit' ? (
                                                             <TrendingUp className="w-5 h-5" />
@@ -338,14 +304,11 @@ const Dashboard: React.FC = () => {
                                                 </div>
                                                 <div className="text-right">
                                                     <p className={`font-semibold ${transaction.transactionType === 'deposit'
-                                                            ? 'text-green-600'
-                                                            : 'text-red-600'
+                                                        ? 'text-green-600'
+                                                        : 'text-red-600'
                                                         }`}>
                                                         {transaction.transactionType === 'deposit' ? '+' : '-'}
                                                         {formatCurrency(transaction.amount)}
-                                                    </p>
-                                                    <p className="text-sm text-gray-500 capitalize">
-                                                        {transaction.status}
                                                     </p>
                                                 </div>
                                             </div>
@@ -357,6 +320,19 @@ const Dashboard: React.FC = () => {
                     </div>
                 </div>
             </div>
+            <ToastContainer
+                position="top-right"
+                autoClose={5000}
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick={false}
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="light"
+                transition={Bounce}
+            />
         </div>
     );
 };

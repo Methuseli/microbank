@@ -1,107 +1,57 @@
-import { Formik } from "formik";
-import { Shield, Mail, Lock, EyeOff, Eye, User } from "lucide-react";
+import axios from "axios";
+import { Form, Formik } from "formik";
+import { Shield } from "lucide-react";
 import { useState } from "react";
+import { baseUrl } from "~/config";
+import { registrationSchema } from "~/schema/registration";
+import { loginSchema } from "~/schema/login";
 import FormController from "~/utils/FormController";
+import { getRegistrationForm } from "~/utils/forms/registration";
+import { Bounce, ToastContainer, toast } from 'react-toastify';
+import { getLoginForm } from "~/utils/forms/login";
+import { useAuth } from "~/context/AuthContext";
 
 
 export function Welcome() {
   const [isLogin, setIsLogin] = useState<boolean>(true);
-  const [formData, setFormData] = useState<{
-    email: string;
-    password: string;
-    confirmPassword?: string;
-    name?: string;
-  }>({
-    email: '',
-    password: ''
-  });
   const [showPassword, setShowPassword] = useState<boolean>(false);
-
-  const handleInputChange = (e: { target: { name: any; value: any; }; }) => {
-    const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value
-    }));
-  };
-
-  const loginForm = [
-    {
-      name: 'email',
-      labelName: 'Email Address',
-      type: 'email',
-      required: true,
-      fieldGroupClassName: "animate-in slide-in-from-top duration-300",
-      labelClassName: "block text-sm font-medium text-gray-700 mb-2",
-      fieldIcon: <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />,
-      innerGroupClassName: "relative",
-      inputClassName: "w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200",
-      placeholder: "johndoe@example.com",
-      errorClassName: "text-red-500 text-xs mt-1 animate-in slide-in-from-top duration-200",
-      value: formData?.email,
-      onChange: handleInputChange,
-    },
-    {
-      name: 'password',
-      labelName: 'Password',
-      type: 'password',
-      required: true,
-      fieldGroupClassName: "animate-in slide-in-from-top duration-300",
-      labelClassName: "block text-sm font-medium text-gray-700 mb-2",
-      fieldIcon: <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />,
-      innerGroupClassName: "relative",
-      inputClassName: "w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200",
-      placeholder: "*********",
-      errorClassName: "text-red-500 text-xs mt-1 animate-in slide-in-from-top duration-200",
-      value: formData?.password,
-      onChange: handleInputChange,
-      passwordToggleClassName: "absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200",
-      passwordToggleIcon: showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />,
-      onClickPasswordToggle: () => setShowPassword(!showPassword)
-    },
-  ];
-
-  const registrationForm = [
-    {
-      name: 'name',
-      labelName: 'Full Name',
-      type: 'text',
-      required: true,
-      fieldGroupClassName: "animate-in slide-in-from-top duration-300",
-      labelClassName: "block text-sm font-medium text-gray-700 mb-2",
-      fieldIcon: <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />,
-      innerGroupClassName: "relative",
-      inputClassName: "w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200",
-      placeholder: "John Doe",
-      errorClassName: "text-red-500 text-xs mt-1 animate-in slide-in-from-top duration-200",
-      value: formData?.name,
-      onChange: handleInputChange,
-    },
-    ...loginForm,
-    {
-      name: 'confirmPassword',
-      labelName: 'Confirm Password',
-      type: 'password',
-      required: true,
-      fieldGroupClassName: "animate-in slide-in-from-top duration-300",
-      labelClassName: "block text-sm font-medium text-gray-700 mb-2",
-      fieldIcon: <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />,
-      innerGroupClassName: "relative",
-      inputClassName: "w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200",
-      placeholder: "*********",
-      errorClassName: "text-red-500 text-xs mt-1 animate-in slide-in-from-top duration-200",
-      value: formData?.confirmPassword,
-      onChange: handleInputChange,
-      passwordToggleClassName: "absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200",
-      passwordToggleIcon: showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />,
-      onClickPasswordToggle: () => setShowPassword(!showPassword)
-    },
-  ]
-
-
+  const { login } = useAuth();
 
   const toggleMode = () => {
     setIsLogin(!isLogin);
+  };
+
+  const handleRegistration = (values: { name: string; email: string; password: string; confirmPassword: string }, {
+    setSubmitting,
+    setFieldError,
+    resetForm,
+  }: {
+    setSubmitting: (s: boolean) => void;
+    setFieldError: (field: string, message: string | undefined) => void;
+    resetForm: () => void;
+  }) => {
+    setSubmitting(true);
+    axios.post(`${baseUrl}auth/register`, values)
+      .then((response) => {
+        // Handle successful registration
+          toast.success("Registration successful! You can now log in.", {
+            position: "top-right",
+          });
+        resetForm();
+      })
+      .catch((error) => {
+        // Handle registration error
+        toast.error("Registration failed. Please check your details and try again.", {
+          position: "top-right",
+        });
+        if (error.response) {
+          const { field, message } = error.response.data;
+          setFieldError(field, message);
+        }
+      })
+      .finally(() => {
+        setSubmitting(false);
+      });
   };
 
   return (
@@ -144,24 +94,40 @@ export function Welcome() {
             {isLogin &&
               <Formik
                 initialValues={{ email: '', password: '' }}
-                validate={(values) => { }}
-                onSubmit={(values, setSubmitting) => {
-
-                }}
+                validationSchema={loginSchema}
+                onSubmit={login}
               >
-                <form className="space-y-6" >
-                  <FormController
-                    formData={[
-                      ...loginForm,
-                      {
-                        type: 'submit',
-                        text: 'Sign In',
-                        buttonClassName: "w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold py-3 px-6 rounded-xl hover:from-blue-700 hover:to-blue-800 focus:ring-4 focus:ring-blue-300 transform hover:scale-[1.02] transition-all duration-200 shadow-lg group",
-                        spanClassName: "flex items-center justify-center",
-                        iconClassName: "w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-200"
-                      }]}
-                  />
-                </form>
+                {({ values, errors, touched, handleChange, handleBlur, isSubmitting, isValid }) => {
+                  const loginForm = getLoginForm({
+                    values,
+                    errors,
+                    touched,
+                    handleChange,
+                    handleBlur,
+                    showPassword,
+                    setShowPassword,
+                  });
+
+                  return (
+                    <Form className="space-y-6">
+                      <FormController
+                        formData={[
+                          ...loginForm,
+                          {
+                            type: "submit",
+                            text: isSubmitting ? "Signing In..." : "Sign In",
+                            buttonClassName:
+                              "w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold py-3 px-6 rounded-xl hover:from-blue-700 hover:to-blue-800 focus:ring-4 focus:ring-blue-300 transform hover:scale-[1.02] transition-all duration-200 shadow-lg group disabled:opacity-60",
+                            spanClassName: "flex items-center justify-center",
+                            iconClassName: "w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-200",
+                            disabled: isSubmitting || !isValid,
+                            icon: true,
+                          },
+                        ]}
+                      />
+                    </Form>
+                  );
+                }}
               </Formik>}
             {isLogin && (
               <div className="text-right">
@@ -174,23 +140,42 @@ export function Welcome() {
               </div>
             )}
             {!isLogin && <Formik
-              initialValues={{ email: '', password: '', confirmPassword: '' }}
-              validate={(values) => { }}
-              onSubmit={(values, setSubmitting) => {
-
-              }}
+              initialValues={{ name: '', email: '', password: '', confirmPassword: '' }}
+              validationSchema={registrationSchema}
+              onSubmit={handleRegistration}
             >
-              <form className="space-y-6" >
-                <FormController
-                  formData={[...registrationForm, {
-                    type: 'submit',
-                    text: 'Create Account',
-                    buttonClassName: "w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold py-3 px-6 rounded-xl hover:from-blue-700 hover:to-blue-800 focus:ring-4 focus:ring-blue-300 transform hover:scale-[1.02] transition-all duration-200 shadow-lg group",
-                    spanClassName: "flex items-center justify-center",
-                    iconClassName: "w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-200"
-                  }]}
-                />
-              </form>
+
+              {({ values, errors, touched, handleChange, handleBlur, isSubmitting, isValid }) => {
+                const registrationForm = getRegistrationForm({
+                  values,
+                  errors,
+                  touched,
+                  handleChange,
+                  handleBlur,
+                  showPassword,
+                  setShowPassword,
+                });
+
+                return (
+                  <Form className="space-y-6">
+                    <FormController
+                      formData={[
+                        ...registrationForm,
+                        {
+                          type: "submit",
+                          text: isSubmitting ? "Creating..." : "Create Account",
+                          buttonClassName:
+                            "w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold py-3 px-6 rounded-xl hover:from-blue-700 hover:to-blue-800 focus:ring-4 focus:ring-blue-300 transform hover:scale-[1.02] transition-all duration-200 shadow-lg group disabled:opacity-60",
+                          spanClassName: "flex items-center justify-center",
+                          iconClassName: "w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-200",
+                          disabled: isSubmitting || !isValid,
+                          icon: true
+                        },
+                      ]}
+                    />
+                  </Form>
+                );
+              }}
             </Formik>}
           </div>
         </div>
@@ -203,7 +188,19 @@ export function Welcome() {
           </p>
         </div>
       </div>
-
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick={false}
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+        transition={Bounce}
+      />
     </main>
   );
 }

@@ -1,30 +1,6 @@
 /* eslint-disable react/jsx-key */
-import { Select } from "antd";
 import { useState } from "react";
-import { SelectSearchField, ButtonField, DefaultField } from "~/components";
-
-/* eslint-disable @typescript-eslint/no-unused-vars */
-const { Option } = Select;
-/**
- * 
- * @param {formData} - this is a list of form options 
-  @example {
-   name: "first_name",
-   "type": "text"
-  }
-  @param {onChange} -  handles all onChange events defined in the input tags like select and file
-  @param {isReadonly} - sets fields to readonly
-  @param {isHidden } - set fields to hidden
-  @param {customOptions} - defines a custom array that is used in select tags
-  @param {selectOptions} - used to choose the selected item in dropdown fields
-  @example {
-    gender: "male"
-  }
-  @usage if(data.gender === selectOptions[data.name]){
-    select this item
-  }
- * @returns 
- */
+import { ButtonField, DefaultField } from "~/components";
 
 interface DataProps {
   readonly formData: any[];
@@ -56,13 +32,6 @@ export function isOptionSelected(optionData: any, data: any, selectOptions: any)
 export default function FormController({
   formData
 }: Readonly<DataProps>) {
-
-  const [selectedValue, setSelectedValue] = useState<any>({});
-  const [entityID, setEntityID] = useState<string>("");
-
-  const reset = () => {
-    window.location.reload();
-  };
 
   return (
     <>

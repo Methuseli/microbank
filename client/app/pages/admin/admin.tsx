@@ -1,120 +1,80 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Users, 
-  Shield, 
-  ShieldOff, 
-  Search, 
+import {
+  Users,
+  Shield,
+  ShieldOff,
+  Search,
   Filter,
-  MoreVertical,
   DollarSign,
   AlertTriangle,
   CheckCircle,
   XCircle
 } from 'lucide-react';
-import type { User, Transaction } from '~/types';
+import type { User } from '~/types';
+import { useAuth } from '~/context/AuthContext';
+import { Navigate } from 'react-router';
+import axios from 'axios';
+import { baseUrl } from '~/config';
+import { Bounce, toast, ToastContainer } from 'react-toastify';
 
 interface AdminPanelProps {
   currentUser: User;
   onLogout: () => void;
 }
 
-const AdminPanel: React.FC<AdminPanelProps> = () => {
+const AdminPanel: React.FC = () => {
   const [clients, setClients] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'blacklisted'>('all');
   const [selectedClient, setSelectedClient] = useState<User | null>(null);
   const [showClientModal, setShowClientModal] = useState(false);
+  const [blacklisting, setBlacklisting] = useState(false);
 
-  const [currentUser, setUser] = useState<User>({
-          id: '1',
-          name: 'John Doe',
-          email: 'john.doe@example.com',
-          balance: 1000,
-          isBlacklisted: false,
-          createdAt: new Date().toISOString(),
-          isAdmin: false
+  const { user, logout } = useAuth();
+
+  const fetchClients = () => {
+    axios.get(`${baseUrl}users/admin`, { withCredentials: true })
+      .then(response => {
+        setClients(response.data);
+      })
+      .catch(error => {
+        console.error("Error fetching clients:", error);
       });
-  
-      const onLogout = () => {
-          setUser({
-              id: '1',
-              name: 'John Doe',
-              email: 'john.doe@example.com',
-              balance: 1000,
-              isBlacklisted: false,
-              createdAt: new Date().toISOString(),
-              isAdmin: false,
-          });
-      };
+  }
+
   // Mock client data
   useEffect(() => {
-    const mockClients: User[] = [
-      {
-        id: '1',
-        email: 'john.doe@example.com',
-        name: 'John Doe',
-        balance: 2500.00,
-        isBlacklisted: false,
-        isAdmin: false,
-        createdAt: '2024-01-10T08:00:00Z'
-      },
-      {
-        id: '2',
-        email: 'jane.smith@example.com',
-        name: 'Jane Smith',
-        balance: 1750.50,
-        isBlacklisted: true,
-        isAdmin: false,
-        createdAt: '2024-01-08T14:30:00Z'
-      },
-      {
-        id: '3',
-        email: 'mike.johnson@example.com',
-        name: 'Mike Johnson',
-        balance: 5200.75,
-        isBlacklisted: false,
-        isAdmin: false,
-        createdAt: '2024-01-05T10:15:00Z'
-      },
-      {
-        id: '4',
-        email: 'sarah.wilson@example.com',
-        name: 'Sarah Wilson',
-        balance: 890.25,
-        isBlacklisted: false,
-        isAdmin: false,
-        createdAt: '2024-01-03T16:45:00Z'
-      },
-      {
-        id: '5',
-        email: 'david.brown@example.com',
-        name: 'David Brown',
-        balance: 0.00,
-        isBlacklisted: true,
-        isAdmin: false,
-        createdAt: '2023-12-28T09:20:00Z'
-      }
-    ];
-    setClients(mockClients);
-  }, []);
+    if (!user || user?.role !== 'ADMIN') return;
+    fetchClients();
+  }, [user]);
 
-  const toggleBlacklist = (clientId: string) => {
-    setClients(prev => prev.map(client => 
-      client.id === clientId 
-        ? { ...client, isBlacklisted: !client.isBlacklisted }
-        : client
-    ));
+  if (user?.role !== 'ADMIN') {
+    return <Navigate to="/dashboard" />;
+  }
+
+
+  const toggleBlacklist = (clientId: string, blacklisted: boolean) => {
+    axios.patch(`${baseUrl}admin/${clientId}`, { blacklisted: !blacklisted }, { withCredentials: true }).
+      then((response) => {
+        if (response.status === 200) {
+          toast.success(`Client ${!blacklisted ? 'blocked' : 'unblocked'} successfully.`);
+          fetchClients();
+        }
+      }).catch((error) => {
+        toast.error(`Failed to ${!blacklisted ? 'block' : 'unblock'} client.`);
+        console.error("Error updating client status:", error);
+      })
   };
 
   const filteredClients = clients.filter(client => {
-    const matchesSearch = 
+    const matchesSearch =
       client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client.email.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesFilter = 
+    const matchesFilter =
       filterStatus === 'all' ||
-      (filterStatus === 'active' && !client.isBlacklisted) ||
-      (filterStatus === 'blacklisted' && client.isBlacklisted);
+      (filterStatus === 'active' && !client.blacklisted) ||
+      (filterStatus === 'blacklisted' && client.blacklisted);
 
     return matchesSearch && matchesFilter;
   });
@@ -135,8 +95,17 @@ const AdminPanel: React.FC<AdminPanelProps> = () => {
   };
 
   const totalBalance = clients.reduce((sum, client) => sum + client.balance, 0);
-  const activeClients = clients.filter(client => !client.isBlacklisted).length;
-  const blacklistedClients = clients.filter(client => client.isBlacklisted).length;
+  const activeClients = clients.filter(client => !client.blacklisted).length;
+  const blacklistedClients = clients.filter(client => client.blacklisted).length;
+
+  const toggleClassName = (client: User) => {
+    const unblock = blacklisting ? 'bg-green-100' : 'bg-green-400';
+    const block = blacklisting ? 'bg-red-100' : 'bg-red-400';
+    return `inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-200 ${client.blacklisted
+      ? `${unblock} text-green-700 hover:bg-green-200`
+      : `${block} text-red-700 hover:bg-red-200`
+      }`;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -152,10 +121,10 @@ const AdminPanel: React.FC<AdminPanelProps> = () => {
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">
-                Admin: {currentUser.name} 
+                Admin: {user?.name}
               </span>
               <button
-                onClick={onLogout}
+                onClick={logout}
                 className="text-sm text-gray-500 hover:text-gray-700 transition-colors duration-200"
               >
                 Sign Out
@@ -222,7 +191,7 @@ const AdminPanel: React.FC<AdminPanelProps> = () => {
           <div className="p-6 border-b border-gray-200">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <h3 className="text-lg font-semibold text-gray-900">Client Management</h3>
-              
+
               <div className="flex flex-col sm:flex-row gap-4">
                 {/* Search */}
                 <div className="relative">
@@ -298,12 +267,11 @@ const AdminPanel: React.FC<AdminPanelProps> = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        client.isBlacklisted
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-green-100 text-green-800'
-                      }`}>
-                        {client.isBlacklisted ? (
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${client.blacklisted
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-green-100 text-green-800'
+                        }`}>
+                        {client.blacklisted ? (
                           <>
                             <AlertTriangle className="w-3 h-3 mr-1" />
                             Blacklisted
@@ -321,14 +289,11 @@ const AdminPanel: React.FC<AdminPanelProps> = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
-                        onClick={() => toggleBlacklist(client.id)}
-                        className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-200 ${
-                          client.isBlacklisted
-                            ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                            : 'bg-red-100 text-red-700 hover:bg-red-200'
-                        }`}
+                        onClick={() => toggleBlacklist(client.id, client.blacklisted)}
+                        className={toggleClassName(client)}
+                        disabled={blacklisting}
                       >
-                        {client.isBlacklisted ? (
+                        {client.blacklisted ? (
                           <>
                             <Shield className="w-3 h-3 mr-1" />
                             Unblock
@@ -355,6 +320,19 @@ const AdminPanel: React.FC<AdminPanelProps> = () => {
           )}
         </div>
       </div>
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick={false}
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+        transition={Bounce}
+      />
     </div>
   );
 };

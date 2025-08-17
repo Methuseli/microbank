@@ -3,22 +3,29 @@ export interface User {
   email: string;
   name: string;
   balance: number;
-  isBlacklisted: boolean;
-  isAdmin: boolean;
+  blacklisted: boolean;
+  role: string;
   createdAt: string;
 }
 
 export interface Transaction {
   id: string;
-  userId: string;
+  accountId: string;
   transactionType: 'deposit' | 'withdrawal';
   amount: number;
   timestamp: string;
   description?: string;
-  status: 'completed' | 'pending' | 'failed';
 }
 
 export interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
+}
+
+export interface BankAccount {
+  id: string;
+  userId: string;
+  accountNumber: string;
+  balance: number;
+  createdAt: string;  
 }

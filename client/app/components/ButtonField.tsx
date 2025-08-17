@@ -6,18 +6,21 @@ interface ButtonFieldProps {
   buttonClassName?: string;
   spanClassName?: string;
   iconClassName?: string;
+  disabled?: boolean;
+  icon: boolean;
 }
 
 function ButtonField(props: Readonly<ButtonFieldProps>) {
-  const { type, text, buttonClassName, spanClassName, iconClassName } = props;
+  const { type, text, buttonClassName, spanClassName, iconClassName, disabled, icon } = props;
   return (
     <button
       type={type}
       className={buttonClassName}
+      disabled={disabled}
     >
       <span className={spanClassName}>
         {text}
-        <ChevronRight className={iconClassName} />
+        {icon && <ChevronRight className={iconClassName} />}
       </span>
     </button>
   );
