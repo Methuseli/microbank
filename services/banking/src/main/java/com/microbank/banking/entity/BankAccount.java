@@ -3,7 +3,7 @@ package com.microbank.banking.entity;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import org.springframework.data.annotation.Transient;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
 import lombok.AllArgsConstructor;
@@ -20,6 +20,7 @@ import lombok.Setter;
 @Getter
 @Table("bank_accounts")
 public class BankAccount {
+    @Id
     private UUID id;
     private String accountNumber;
     @NonNull

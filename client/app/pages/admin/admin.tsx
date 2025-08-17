@@ -30,10 +30,10 @@ const AdminPanel: React.FC = () => {
   const [showClientModal, setShowClientModal] = useState(false);
   const [blacklisting, setBlacklisting] = useState(false);
 
-  const { user, logout } = useAuth();
+  const { user, logout, token } = useAuth();
 
   const fetchClients = () => {
-    axios.get(`${baseUrl}users/admin`, { withCredentials: true })
+    axios.get(`${baseUrl}users/admin`, { headers: { Authorization: `Bearer ${token}` } })
       .then(response => {
         setClients(response.data);
       })
@@ -54,7 +54,7 @@ const AdminPanel: React.FC = () => {
 
 
   const toggleBlacklist = (clientId: string, blacklisted: boolean) => {
-    axios.patch(`${baseUrl}admin/${clientId}`, { blacklisted: !blacklisted }, { withCredentials: true }).
+    axios.patch(`${baseUrl}admin/${clientId}`, { blacklisted: !blacklisted }, { headers: { Authorization: `Bearer ${token}` } }).
       then((response) => {
         if (response.status === 200) {
           toast.success(`Client ${!blacklisted ? 'blocked' : 'unblocked'} successfully.`);

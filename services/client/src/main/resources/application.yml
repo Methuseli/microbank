@@ -17,16 +17,15 @@ spring:
     listener:
       ack-mode: MANUAL_IMMEDIATE
     producer:
-      transaction-id-prefix: tx-client- # For transactional sends
-      properties:
-        enable.idempotence: true
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
 server:
   port: 8080
 
 jwt:
   secret: ${SPRING_JWT_SECRET}
   expiration: 86400000
-
-logging:
-  level:
-    root: debug
+# logging:
+#   level:
+#     root: debug

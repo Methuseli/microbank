@@ -1,5 +1,6 @@
 package com.microbank.banking.config;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -46,7 +47,7 @@ public class KafkaConfig {
 
     @Bean
     public KafkaReceiver<String, String> kafkaReceiver() {
-        return KafkaReceiver.create(receiverOptions());
+        return KafkaReceiver.create(receiverOptions().subscription(Collections.singleton("user-created")));
     }
 
     @Bean

@@ -27,7 +27,7 @@ const Dashboard: React.FC = () => {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const navigate = useNavigate();
 
-    const { user, logout } = useAuth();
+    const { user, logout, token } = useAuth();
     const [bankAccount, setBankAccount] = useState<BankAccount>({
         id: '1',
         userId: '',
@@ -38,7 +38,7 @@ const Dashboard: React.FC = () => {
 
     useEffect(() => {
         if (!user) return;
-        axios.get(`${bankingUrl}bank-accounts/${user.id}`, { withCredentials: true })
+        axios.get(`${bankingUrl}bank-accounts/${user.id}`, { headers: { Authorization: `Bearer ${token}` } })
             .then(response => {
                 setBankAccount(response.data);
             })
@@ -50,7 +50,7 @@ const Dashboard: React.FC = () => {
     // Mock transaction data
     useEffect(() => {
         if (bankAccount.id === "1") return;
-        axios.get(`${bankingUrl}bank-accounts/${bankAccount?.id}/transactions`, { withCredentials: true })
+        axios.get(`${bankingUrl}bank-transactions/${bankAccount?.id}/transactions`, { headers: { Authorization: `Bearer ${token}` } })
             .then(response => {
                 setTransactions(response.data);
             })
@@ -73,11 +73,12 @@ const Dashboard: React.FC = () => {
         setSubmitting(true);
         const url = `${bankingUrl}bank-accounts/${bankAccount?.id}/${activeTab}`;
         axios
-            .patch(url, { amount: values.amount, description: values.description }, { withCredentials: true })
+            .patch(url, { amount: values.amount, description: values.description }, { headers: { Authorization: `Bearer ${token}` } })
             .then(response => {
                 if (response.status === 200) {
                     toast.success("Transaction was successful!!!");
                     setBankAccount(response.data);
+                    resetForm();
                 }
             })
             .catch(error => {
@@ -103,7 +104,7 @@ const Dashboard: React.FC = () => {
                 currency: 'USD'
             }).format(amount);
         }
-        return "Funds"
+        return "0.00"
     };
 
     const formatDate = (dateString: string) => {
@@ -245,7 +246,7 @@ const Dashboard: React.FC = () => {
                                                         text: isSubmitting ? (
                                                             "Loading"
                                                         ) : (
-                                                            `${buttonText()} ${formatCurrency(bankAccount?.balance)}`
+                                                            `${buttonText()} ${formatCurrency(values?.amount)}`
                                                         ),
                                                         buttonClassName: `w-full py-3 px-4 rounded-xl font-semibold transition-all duration-200 ${activeTab === 'deposit'
                                                             ? 'bg-green-600 hover:bg-green-700 text-white'

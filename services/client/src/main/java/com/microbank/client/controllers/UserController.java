@@ -2,7 +2,6 @@ package com.microbank.client.controllers;
 
 import java.util.UUID;
 
-import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,8 +15,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -63,15 +60,17 @@ public class UserController {
     }
 
     @GetMapping("/admin")
-    public Flux<ResponseEntity<User>> getAllUsers() {
-        return userService.getAllUsers()
-                .map(ResponseEntity::ok);
+    public Mono<ResponseEntity<Flux<User>>> getAllUsers() {
+        Flux<User> users = userService.getAllUsers();
+        return Mono.just(ResponseEntity.ok().body(users));
     }
 
     @GetMapping("/current-user")
-    public Mono<ResponseEntity<User>> getCurrentUser(ServerHttpRequest request) {
-        HttpCookie cookie = request.getCookies().getFirst("auth_token");
-        String token = cookie.getValue();
+    public Mono<ResponseEntity<User>> getCurrentUser(@org.springframework.web.bind.annotation.RequestHeader("Authorization") String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
+        }
+        String token = authHeader.substring(7);
         return userService.getCurrentUser(token)
                 .map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.notFound().build());

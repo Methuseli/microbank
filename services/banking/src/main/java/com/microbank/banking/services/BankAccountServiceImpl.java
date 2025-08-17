@@ -18,6 +18,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.kafka.receiver.KafkaReceiver;
 import reactor.kafka.receiver.ReceiverOffset;
+import reactor.kafka.receiver.ReceiverRecord;
 import reactor.util.retry.Retry;
 
 @AllArgsConstructor
@@ -30,8 +31,8 @@ public class BankAccountServiceImpl implements BankAccountService {
     private Disposable consumerDisposable;
 
     public BankAccountServiceImpl(BankAccountRepository bankAccountRepository,
-                                   BankTransactionRepository bankTransactionRepository,
-                                   KafkaReceiver<String, String> kafkaReceiver) {
+            BankTransactionRepository bankTransactionRepository,
+            KafkaReceiver<String, String> kafkaReceiver) {
         this.bankAccountRepository = bankAccountRepository;
         this.bankTransactionRepository = bankTransactionRepository;
         this.kafkaReceiver = kafkaReceiver;
@@ -43,20 +44,21 @@ public class BankAccountServiceImpl implements BankAccountService {
     @PostConstruct
     public void startConsuming() {
         consumerDisposable = kafkaReceiver.receive()
-                .concatMap(record -> {
-                    UUID userId = UUID.fromString(record.value());
-                    return createAccountForUser(userId)
-                            .then(commitOffset(record.receiverOffset()))
-                            .onErrorResume(e -> {
-                                log.error("Failed to process record: {}", record, e);
-                                return commitOffset(record.receiverOffset()); // Commit even on failure
-                            });
-                })
-                .retryWhen(Retry.backoff(10, Duration.ofSeconds(1)))
-                .subscribe(
-                        null,
-                        error -> log.error("Kafka consumer failed", error)
-                );
+                .doOnNext(record -> log.info("Received message: key={}, value={}", record.key(), record.value()))
+                .concatMap(this::processRecord)
+                .subscribe();
+    }
+
+    private Mono<Void> processRecord(ReceiverRecord<String, String> record) {
+        try {
+            UUID userId = UUID.fromString(record.value()); // validate
+            return createAccountForUser(userId)
+                    .then(commitOffset(record.receiverOffset()));
+        } catch (IllegalArgumentException e) {
+            // Value wasn't a UUID
+            log.error("Invalid UUID in record: {}", record.value(), e);
+            return commitOffset(record.receiverOffset()); // skip bad record
+        }
     }
 
     private Mono<Void> commitOffset(ReceiverOffset offset) {
@@ -72,7 +74,7 @@ public class BankAccountServiceImpl implements BankAccountService {
             log.info("Kafka consumer stopped");
         }
     }
-    
+
     private Mono<BankAccount> createAccountForUser(UUID userId) {
         BankAccount account = BankAccount.builder()
                 .balance(0.0)
@@ -118,15 +120,16 @@ public class BankAccountServiceImpl implements BankAccountService {
         return bankAccountRepository.findById(id)
                 .flatMap(account -> {
                     account.setBalance(account.getBalance() + amount);
-                    bankTransactionRepository.save(
-                            BankTransaction.builder()
-                                    .accountId(id)
-                                    .amount(amount)
-                                    .transactionType("deposit")
-                                    .description(description)
-                                    .build()
-                    ).subscribe(); // Save transaction asynchronously
-                    return bankAccountRepository.save(account);
+
+                    BankTransaction transaction = BankTransaction.builder()
+                            .accountId(id)
+                            .amount(amount)
+                            .transactionType("deposit")
+                            .description(description)
+                            .build();
+
+                    return bankTransactionRepository.save(transaction)
+                            .then(bankAccountRepository.save(account));
                 });
     }
 
@@ -134,20 +137,20 @@ public class BankAccountServiceImpl implements BankAccountService {
     public Mono<BankAccount> withdraw(UUID id, double amount, String description) {
         return bankAccountRepository.findById(id)
                 .flatMap(account -> {
-                    if (account.getBalance() >= amount) {
-                        account.setBalance(account.getBalance() - amount);
-                        bankTransactionRepository.save(
-                                BankTransaction.builder()
-                                        .accountId(id)
-                                        .amount(amount)
-                                        .transactionType("withdrawal")
-                                        .description(description)
-                                        .build()
-                        ).subscribe(); // Save transaction asynchronously
-                        return bankAccountRepository.save(account);
-                    } else {
+                    if (account.getBalance() < amount) {
                         return Mono.error(new RuntimeException("Insufficient funds"));
                     }
+                    account.setBalance(account.getBalance() - amount);
+
+                    BankTransaction transaction = BankTransaction.builder()
+                            .accountId(id)
+                            .amount(amount)
+                            .transactionType("withdrawal")
+                            .description(description)
+                            .build();
+                    
+                    return bankTransactionRepository.save(transaction)
+                            .then(bankAccountRepository.save(account));
                 });
     }
 

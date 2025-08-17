@@ -6,7 +6,6 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
@@ -66,15 +65,16 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowCredentials(true);
-        config.addAllowedOrigin("http://localhost:5173"); // frontend origin
-        config.addAllowedHeader("*"); // allow all headers
-        config.addAllowedMethod("*"); // allow GET, POST, PUT, DELETE, OPTIONS
+        config.setAllowCredentials(false);
+        config.addAllowedOrigin("*"); // Allow all origins
+        config.addAllowedHeader("*");
+        config.addAllowedMethod("*");
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
     }
+
 
     @Bean
     public JWTUtil jwtUtil() {
@@ -89,16 +89,21 @@ public class SecurityConfig {
     @Bean
     WebFilter jwtAuthFilter() {
         return (exchange, chain) -> {
-            HttpCookie cookie = exchange.getRequest().getCookies().getFirst("auth_token");
-            if (cookie == null) {
-                return chain.filter(exchange); // Proceed without auth
+            String authHeader = exchange.getRequest().getHeaders().getFirst("Authorization");
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                // No Bearer token provided; proceed without authentication
+                return chain.filter(exchange);
             }
+
+            String token = authHeader.substring(7); // Remove "Bearer " prefix
+
             try {
-                Authentication auth = validateToken(cookie.getValue()); // Validate JWT
-                log.info("Token ", cookie.getValue());
+                Authentication auth = validateToken(token); // Validate JWT
+                log.info("Token validated for user {}", auth.getName());
                 return chain.filter(exchange)
                         .contextWrite(ReactiveSecurityContextHolder.withAuthentication(auth));
             } catch (Exception e) {
+                log.error("JWT validation failed", e);
                 exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                 return exchange.getResponse().setComplete(); // Block request
             }

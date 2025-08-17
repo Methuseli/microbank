@@ -3,6 +3,7 @@ package com.microbank.banking.entity;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
 import lombok.AllArgsConstructor;
@@ -15,13 +16,13 @@ import lombok.NonNull;
 @Table("bank_transactions")
 @Builder
 public class BankTransaction {
+    @Id
     private UUID id;
     @NonNull
     private UUID accountId;
     private double amount;
     @NonNull
     private String transactionType;
-    @NonNull
-    private LocalDateTime timestamp;
+    private LocalDateTime createdAt;
     private String description;
 }

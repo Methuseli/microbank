@@ -22,5 +22,4 @@ public class BlacklistedToken {
     private String token;
     private UUID userId;
     private LocalDateTime createdAt;
-
 }

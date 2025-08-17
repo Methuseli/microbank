@@ -40,7 +40,7 @@ public class BankAccountController {
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{id}/details")
     public Mono<ResponseEntity<BankAccount>> getAccountById(@PathVariable UUID id) {
         return bankAccountService.getAccountById(id)
                 .map(ResponseEntity::ok)
