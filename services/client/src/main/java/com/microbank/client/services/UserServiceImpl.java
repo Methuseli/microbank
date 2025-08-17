@@ -5,15 +5,19 @@ import java.util.UUID;
 import com.microbank.client.dto.UserUpdateRequest;
 import com.microbank.client.entity.User;
 import com.microbank.client.repository.UserRepository;
+import com.microbank.client.utils.JWTUtil;
 import com.microbank.client.utils.UserMapper;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @AllArgsConstructor
+@Slf4j
 public class UserServiceImpl implements  UserService {
     private final UserRepository userRepository;
+    private final JWTUtil jwtUtil;
 
     @Override
     public Mono<User> getUserById(UUID id) {
@@ -37,6 +41,13 @@ public class UserServiceImpl implements  UserService {
     @Override
     public Flux<User> getAllUsers() {
         return userRepository.findAll();
+    }
+
+    @Override
+    public Mono<User> getCurrentUser(String token) {
+        log.info("Getting current user from token: {}", token);
+        log.info("Subject: {}", jwtUtil.getClaimsFromToken(token).getSubject());
+        return userRepository.findById(UUID.fromString(jwtUtil.getClaimsFromToken(token).getSubject()));
     }
     
 }

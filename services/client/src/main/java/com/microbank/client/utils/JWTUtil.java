@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 
 import com.microbank.client.entity.User;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
@@ -30,5 +32,19 @@ public class JWTUtil {
                 .expiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(key)
                 .compact();
+    }
+
+    public Claims getClaimsFromToken(String token) {
+        SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+        // try {
+            return Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+        // } catch (JwtException e) {
+        //     return Jwts.claims().build();
+        // }
+        
     }
 }

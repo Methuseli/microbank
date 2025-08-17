@@ -21,7 +21,7 @@ import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping("api/v1/auth")
+@RequestMapping("/api/v1/auth")
 @AllArgsConstructor
 public class AuthController {
 
@@ -41,9 +41,10 @@ public class AuthController {
                 .map(user -> {
                     ResponseCookie cookie = ResponseCookie.from(AUTH_TOKEN_COOKIE_NAME, jwtUtil.generateToken(user))
                             .httpOnly(true)
-                            .secure(true)
+                            .secure(false)
+                            .sameSite("None")
                             .path("/")
-                            .maxAge(Duration.ofHours(1))
+                            .maxAge(Duration.ofHours(24))
                             .build();
                     response.addCookie(cookie);
                     return ResponseEntity.ok(user);
@@ -56,7 +57,8 @@ public class AuthController {
                 .doOnSuccess(aVoid -> 
                     response.addCookie(ResponseCookie.from(AUTH_TOKEN_COOKIE_NAME, "")
                             .httpOnly(true)
-                            .secure(true)
+                            .secure(false)
+                            .sameSite("None")
                             .path("/")
                             .maxAge(0)
                             .build())

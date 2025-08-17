@@ -19,4 +19,6 @@ public interface UserService {
     public Mono<Void> deleteUser(UUID id);
 
     public Flux<User> getAllUsers();
+
+    public Mono<User> getCurrentUser(String token);
 }

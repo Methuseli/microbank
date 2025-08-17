@@ -1,13 +1,32 @@
 spring:
   application:
     name: client
-  datasource:
-    url: r2dbc:postgresql://client_db/${CLIENT_POSTGRES_DB}
-    username: ${CLIENT_POSTGRES_USER}
-    password: ${CLIENT_POSTGRES_PASSWORD}
+  r2dbc:
+    url: r2dbc:postgresql://client_db/${SPRING_R2DBC_URL}
+    username: ${SPRING_R2DBC_USERNAME}
+    password: ${SPRING_R2DBC_PASSWORD}
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: banking-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      properties:
+        isolation.level: read_committed
+    listener:
+      ack-mode: MANUAL_IMMEDIATE
+    producer:
+      transaction-id-prefix: tx-client- # For transactional sends
+      properties:
+        enable.idempotence: true
 server:
   port: 8080
 
 jwt:
   secret: ${SPRING_JWT_SECRET}
-  expiration: 3600000
+  expiration: 86400000
+
+logging:
+  level:
+    root: debug
