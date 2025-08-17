@@ -23,4 +23,5 @@ public class BankTransaction {
     private String transactionType;
     @NonNull
     private LocalDateTime timestamp;
+    private String description;
 }

@@ -6,4 +6,5 @@ CREATE TABLE IF NOT EXISTS bank_accounts (
     account_number VARCHAR(20) NOT NULL UNIQUE,
     balance DECIMAL(15, 2) DEFAULT 0.00,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    description TEXT
 )

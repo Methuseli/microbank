@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.microbank.banking.dto.TransactionRequest;
 import com.microbank.banking.entity.BankAccount;
 import com.microbank.banking.services.BankAccountService;
 
@@ -20,7 +21,7 @@ import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping("api/v1/bank-accounts")
+@RequestMapping("/api/v1/bank-accounts")
 @AllArgsConstructor
 public class BankAccountController {
     private final BankAccountService bankAccountService;
@@ -30,6 +31,13 @@ public class BankAccountController {
         return bankAccountService.createAccount(account)
                 .map(createdAccount -> ResponseEntity.status(HttpStatus.CREATED).body(createdAccount))
                 .defaultIfEmpty(ResponseEntity.status(HttpStatus.BAD_REQUEST).build());
+    }
+
+    @GetMapping("/{userId}")
+    public Mono<ResponseEntity<BankAccount>> getAccountByAccountHolderId(@PathVariable UUID userId) {
+        return bankAccountService.getAccountByAccountHolderId(userId)
+                .map(ResponseEntity::ok)
+                .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/{id}")
@@ -47,15 +55,15 @@ public class BankAccountController {
     }
 
     @PatchMapping("/{id}/deposit")
-    public Mono<ResponseEntity<BankAccount>> deposit(@PathVariable UUID id, @RequestBody double amount) {
-        return bankAccountService.deposit(id, amount)
+    public Mono<ResponseEntity<BankAccount>> deposit(@PathVariable UUID id, @RequestBody TransactionRequest transactionRequest) {
+        return bankAccountService.deposit(id, transactionRequest.getAmount(), transactionRequest.getDescription())
                 .map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
     @PatchMapping("/{id}/withdraw")
-    public Mono<ResponseEntity<BankAccount>> withdraw(@PathVariable UUID id, @RequestBody double amount) {
-        return bankAccountService.withdraw(id, amount)
+    public Mono<ResponseEntity<BankAccount>> withdraw(@PathVariable UUID id, @RequestBody TransactionRequest transactionRequest) {
+        return bankAccountService.withdraw(id, transactionRequest.getAmount(), transactionRequest.getDescription())
                 .map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }
