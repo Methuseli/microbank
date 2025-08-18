@@ -21,7 +21,7 @@ import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping("/api/v1/bank-accounts")
+@RequestMapping("/banking/api/v1/bank-accounts")
 @AllArgsConstructor
 public class BankAccountController {
     private final BankAccountService bankAccountService;

@@ -265,7 +265,7 @@ const AuthContext = createContext<AuthContextType>({
 
 // Protected route wrapper
 if (!user) {
-  return <Navigate to="/" />;
+  return <Navigate to="/frontend" />;
 }
 ```
 
@@ -406,7 +406,7 @@ axios.interceptors.response.use(
     if (error.response?.status === 401) {
       // Handle unauthorized access
       logout();
-      navigate('/');
+      navigate('/frontend');
     }
     return Promise.reject(error);
   }

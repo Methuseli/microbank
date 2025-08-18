@@ -49,7 +49,7 @@ const AdminPanel: React.FC = () => {
   }, [user]);
 
   if (user?.role !== 'ADMIN') {
-    return <Navigate to="/dashboard" />;
+    return <Navigate to="/frontend/dashboard" />;
   }
 
 
@@ -94,7 +94,6 @@ const AdminPanel: React.FC = () => {
     });
   };
 
-  const totalBalance = clients.reduce((sum, client) => sum + client.balance, 0);
   const activeClients = clients.filter(client => !client.blacklisted).length;
   const blacklistedClients = clients.filter(client => client.blacklisted).length;
 
@@ -123,6 +122,14 @@ const AdminPanel: React.FC = () => {
               <span className="text-sm text-gray-600">
                 Admin: {user?.name}
               </span>
+              {user?.role === "ADMIN" && <button
+                onClick={() => {
+                  navigate("/frontend/dashboard")
+                }}
+                className="text-sm text-blue-500 hover:text-blue-700 transition-colors duration-200"
+              >
+                Dashboard
+              </button>}
               <button
                 onClick={logout}
                 className="text-sm text-gray-500 hover:text-gray-700 transition-colors duration-200"
@@ -136,7 +143,7 @@ const AdminPanel: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-2xl p-6 shadow-lg">
             <div className="flex items-center">
               <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
@@ -169,18 +176,6 @@ const AdminPanel: React.FC = () => {
               <div className="ml-4">
                 <p className="text-sm text-gray-600">Blacklisted</p>
                 <p className="text-2xl font-bold text-gray-900">{blacklistedClients}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl p-6 shadow-lg">
-            <div className="flex items-center">
-              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                <DollarSign className="w-6 h-6 text-purple-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm text-gray-600">Total Balance</p>
-                <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalBalance)}</p>
               </div>
             </div>
           </div>
@@ -230,9 +225,6 @@ const AdminPanel: React.FC = () => {
                     Client
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Balance
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -259,11 +251,6 @@ const AdminPanel: React.FC = () => {
                           </div>
                           <div className="text-sm text-gray-500">{client.email}</div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {formatCurrency(client.balance)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

@@ -94,7 +94,7 @@ const Dashboard: React.FC = () => {
     };
 
     if (!user) {
-        return <Navigate to="/" />;
+        return <Navigate to="/frontend/" />;
     }
 
     const formatCurrency = (amount: number) => {
@@ -161,9 +161,9 @@ const Dashboard: React.FC = () => {
                             </span>
                             {user?.role === "ADMIN" && <button
                                 onClick={() => {
-                                    navigate("/admin")
+                                    navigate("/frontend/admin")
                                 }}
-                                className="text-sm text-green-500 hover:text-green-700 transition-colors duration-200"
+                                className="text-sm text-blue-500 hover:text-blue-700 transition-colors duration-200"
                             >
                                 Admin
                             </button>}
@@ -299,7 +299,7 @@ const Dashboard: React.FC = () => {
                                                             {transaction.description}
                                                         </p>
                                                         <p className="text-sm text-gray-500">
-                                                            {formatDate(transaction.timestamp)}
+                                                            {formatDate(transaction.createdAt)}
                                                         </p>
                                                     </div>
                                                 </div>

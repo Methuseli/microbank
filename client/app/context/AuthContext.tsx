@@ -47,7 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     if (user) {
-      navigate("/dashboard");
+      navigate("/frontend/dashboard");
       return;
     }
     if (!token) return;
@@ -72,7 +72,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           localStorage.setItem("token", res.data);
           resetForm();
           toast.success("Login successful!");
-          navigate("/dashboard");
+          navigate("/frontend/dashboard");
         }
       })
       .catch(err => {
@@ -109,6 +109,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     axios.post(`${baseUrl}auth/logout`, {userId: user?.id}, { headers: { Authorization: `Bearer ${token}` } })
       .then(() => {
         setUser(null);
+        localStorage.removeItem("token");
       })
       .catch((err) => {
         console.log("Error logging out ", err);
