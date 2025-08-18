@@ -99,6 +99,7 @@ public class SecurityConfig {
 
             try {
                 Authentication auth = validateToken(token); // Validate JWT
+                
                 log.info("Token validated for user {}", auth.getName());
                 return chain.filter(exchange)
                         .contextWrite(ReactiveSecurityContextHolder.withAuthentication(auth));
@@ -124,6 +125,8 @@ public class SecurityConfig {
                     log.info("Role {}", r);
                     return new SimpleGrantedAuthority("ROLE_" + r);})
                 .collect(Collectors.toList());
+
+        log.info("Authorities granted for {}: {}", username, authorities);
 
         return new UsernamePasswordAuthenticationToken(username, null, authorities);
     }
