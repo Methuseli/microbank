@@ -1,51 +1,51 @@
-name: securebank-deploy
+# name: securebank-deploy
 
-on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
-  repository_dispatch:
-    types: [deploy]
+# on:
+#   push:
+#     branches:
+#       - main
+#   workflow_dispatch:
+#   repository_dispatch:
+#     types: [deploy]
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3 
+# jobs:
+#   deploy:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v3 
 
-      - name: executing remote ssh commands using password
-        uses: appleboy/ssh-action@v1.2.2
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
-          port: ${{ secrets.PORT }}
-          script: |
-            if [ ! -d /home/${{secrets.USERNAME}}/microbank ]; then
-              cd /home/${{secrets.USERNAME}}/
-              git@github.com:Methuseli/microbank.git
-            fi
-            cd /home/${{secrets.USERNAME}}/microbank
-            git pull --prune origin
-            export CLIENT_POSTGRES_USER=${{secrets.CLIENT_POSTGRES_USER}}
-            export CLIENT_POSTGRES_DB=${{secrets.CLIENT_POSTGRES_DB}}
-            export CLIENT_POSTGRES_PASSWORD='${{secrets.CLIENT_POSTGRES_PASSWORD}}'
-            export JWT_SECRET=${{secrets.JWT_SECRET}}
-            export BANKING_POSTGRES_USER=${{secrets.BANKING_POSTGRES_USER}}
-            export BANKING_POSTGRES_DB=${{secrets.BANKING_POSTGRES_DB}}
-            export BANKING_POSTGRES_PASSWORD='${{secrets.BANKING_POSTGRES_PASSWORD}}'
-            export KAFKA_NODE_ID=${{secrets.KAFKA_NODE_ID}}
-            export KAFKA_PROCESS_ROLES=${{secrets.KAFKA_PROCESS_ROLES}}
-            export KAFKA_CONTROLLER_QUORUM_VOTERS=${{secrets.KAFKA_CONTROLLER_QUORUM_VOTERS}}
-            export KAFKA_LISTENERS=${{secrets.KAFKA_LISTENERS}}
-            export KAFKA_ADVERTISED_LISTENERS=${{secrets.KAFKA_ADVERTISED_LISTENERS}}
-            export KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=${{secrets.KAFKA_LISTENER_SECURITY_PROTOCOL_MAP}}
-            export KAFKA_CONTROLLER_LISTENER_NAMES=${{secrets.KAFKA_CONTROLLER_LISTENER_NAMES}}
-            export KAFKA_INTER_BROKER_LISTENER_NAME=${{secrets.KAFKA_INTER_BROKER_LISTENER_NAME}}
-            export KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=${{secrets.KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR}}
-            export SPRING_KAFKA_BOOTSTRAP_SERVERS=${{secrets.SPRING_KAFKA_BOOTSTRAP_SERVERS}}
+#       - name: executing remote ssh commands using password
+#         uses: appleboy/ssh-action@v1.2.2
+#         with:
+#           host: ${{ secrets.HOST }}
+#           username: ${{ secrets.USERNAME }}
+#           key: ${{ secrets.SSH_KEY }}
+#           port: ${{ secrets.PORT }}
+#           script: |
+#             if [ ! -d /home/${{secrets.USERNAME}}/microbank ]; then
+#               cd /home/${{secrets.USERNAME}}/
+#               git@github.com:Methuseli/microbank.git
+#             fi
+#             cd /home/${{secrets.USERNAME}}/microbank
+#             git pull --prune origin
+#             export CLIENT_POSTGRES_USER=${{secrets.CLIENT_POSTGRES_USER}}
+#             export CLIENT_POSTGRES_DB=${{secrets.CLIENT_POSTGRES_DB}}
+#             export CLIENT_POSTGRES_PASSWORD='${{secrets.CLIENT_POSTGRES_PASSWORD}}'
+#             export JWT_SECRET=${{secrets.JWT_SECRET}}
+#             export BANKING_POSTGRES_USER=${{secrets.BANKING_POSTGRES_USER}}
+#             export BANKING_POSTGRES_DB=${{secrets.BANKING_POSTGRES_DB}}
+#             export BANKING_POSTGRES_PASSWORD='${{secrets.BANKING_POSTGRES_PASSWORD}}'
+#             export KAFKA_NODE_ID=${{secrets.KAFKA_NODE_ID}}
+#             export KAFKA_PROCESS_ROLES=${{secrets.KAFKA_PROCESS_ROLES}}
+#             export KAFKA_CONTROLLER_QUORUM_VOTERS=${{secrets.KAFKA_CONTROLLER_QUORUM_VOTERS}}
+#             export KAFKA_LISTENERS=${{secrets.KAFKA_LISTENERS}}
+#             export KAFKA_ADVERTISED_LISTENERS=${{secrets.KAFKA_ADVERTISED_LISTENERS}}
+#             export KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=${{secrets.KAFKA_LISTENER_SECURITY_PROTOCOL_MAP}}
+#             export KAFKA_CONTROLLER_LISTENER_NAMES=${{secrets.KAFKA_CONTROLLER_LISTENER_NAMES}}
+#             export KAFKA_INTER_BROKER_LISTENER_NAME=${{secrets.KAFKA_INTER_BROKER_LISTENER_NAME}}
+#             export KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=${{secrets.KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR}}
+#             export SPRING_KAFKA_BOOTSTRAP_SERVERS=${{secrets.SPRING_KAFKA_BOOTSTRAP_SERVERS}}
 
-            docker compose down
-            docker compose up --build
+#             docker compose down
+#             docker compose up --build

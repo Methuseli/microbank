@@ -7,7 +7,8 @@ export default defineConfig({
   base: '/frontend/',
   plugins: [tailwindcss(), reactRouter(), tsconfigPaths()],
   server: {
-    host: '0.0.0.0',
+    host: true,
+    strictPort: true,
     port: 5173
   },
   allowedHosts: [

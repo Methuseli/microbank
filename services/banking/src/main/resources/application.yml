@@ -18,6 +18,8 @@ spring:
       ack-mode: MANUAL_IMMEDIATE
 server:
   port: 8080
+  webflux:
+    base-path: /banking
 
 jwt:
   secret: ${SPRING_JWT_SECRET}
