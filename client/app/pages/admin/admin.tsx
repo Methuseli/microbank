@@ -94,7 +94,6 @@ const AdminPanel: React.FC = () => {
     });
   };
 
-  const totalBalance = clients.reduce((sum, client) => sum + client.balance, 0);
   const activeClients = clients.filter(client => !client.blacklisted).length;
   const blacklistedClients = clients.filter(client => client.blacklisted).length;
 
@@ -172,18 +171,6 @@ const AdminPanel: React.FC = () => {
               </div>
             </div>
           </div>
-
-          <div className="bg-white rounded-2xl p-6 shadow-lg">
-            <div className="flex items-center">
-              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                <DollarSign className="w-6 h-6 text-purple-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm text-gray-600">Total Balance</p>
-                <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalBalance)}</p>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Client Management */}
@@ -230,9 +217,6 @@ const AdminPanel: React.FC = () => {
                     Client
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Balance
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -259,11 +243,6 @@ const AdminPanel: React.FC = () => {
                           </div>
                           <div className="text-sm text-gray-500">{client.email}</div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {formatCurrency(client.balance)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
