@@ -56,7 +56,7 @@ public class SecurityConfig {
                 )
                 .authorizeExchange(ex -> ex
                 .pathMatchers("/client/api/v1/auth/**").permitAll()
-                .pathMatchers("/client/api/v1/users/admin/**").hasRole("ADMIN")
+                .pathMatchers("/client/api/v1/users/admin/**").hasAuthority("ROLE_ADMIN")
                 .anyExchange().authenticated())
                 .addFilterAt(jwtAuthFilter(), SecurityWebFiltersOrder.AUTHENTICATION)
                 .build();
@@ -116,15 +116,8 @@ public class SecurityConfig {
 
         String username = claims.getSubject();
         log.info("Token claims for user {}: {}", username, claims);
-        List<?> rawRoles = claims.get("roles", List.class);
-        List<String> roles = rawRoles == null ? List.of() : rawRoles.stream()
-                .map(Object::toString)
-                .collect(Collectors.toList());
-        List<SimpleGrantedAuthority> authorities = roles.stream()
-                .map(r -> {
-                    log.info("Role {}", r);
-                    return new SimpleGrantedAuthority("ROLE_" + r);})
-                .collect(Collectors.toList());
+        String role = claims.get("role", String.class);
+        List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
 
         log.info("Authorities granted for {}: {}", username, authorities);
 
