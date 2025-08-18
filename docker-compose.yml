@@ -12,8 +12,8 @@ services:
       - NODE_ENV=development
     restart: unless-stopped
     # Add explicit network
-    networks:
-      - mynet
+    # networks:
+    #   - mynet
 
   client_db:
     image: postgres:15
@@ -115,7 +115,7 @@ volumes:
   postgres_data:
   banking_postgres_data:
 
-networks:
-  mynet:
-    name: my-app-network
-    driver: bridge
+# networks:
+#   mynet:
+#     name: my-app-network
+#     driver: bridge
