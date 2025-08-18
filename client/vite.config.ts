@@ -9,7 +9,19 @@ export default defineConfig({
   server: {
     host: true,
     strictPort: true,
-    port: 5173
+    port: 5173,
+    proxy: {
+      '/client': {
+        target: 'http://nginx-proxy/client',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/client/, '')
+      },
+      '/banking': {
+        target: 'http://nginx-proxy/banking',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/banking/, '')
+      }
+    }
   },
   allowedHosts: [
       'frontend',          // service name inside Docker
