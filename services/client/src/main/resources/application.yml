@@ -34,6 +34,6 @@ jwt:
 
 springdoc:
   api-docs:
-    path: /api-docs
+    path: /client/api-docs
   swagger-ui:
-    path: /swagger-ui.html
+    path: /client/swagger-ui.html
