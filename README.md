@@ -63,7 +63,7 @@ We chose **Spring WebFlux** (reactive programming) over traditional servlet-base
 - **Apache Kafka** (Message Broker)
 - **Docker** (Containerization)
 
-## 🏃‍♂️ Quick Start
+ ur## 🏃‍♂️ Quick Start
 
 ### Prerequisites
 - Docker & Docker Compose
@@ -100,6 +100,10 @@ cd services/client
 cd services/banking
 ./mvnw spring-boot:run
 ```
+
+### API END POINTS FOR BACKEND SERVICES:
+[Banking Service](http://13.59.11.243.sslip.io/banking/swagger-ui/index.html)
+[Client Service](http://13.59.11.243.sslip.io/client/swagger-ui/index.html)
 
 #### Frontend
 ```bash
