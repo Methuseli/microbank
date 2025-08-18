@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
-@RequestMapping("/api/v1/users")
+@RequestMapping("/client/api/v1/users")
 @AllArgsConstructor
 public class UserController {
 

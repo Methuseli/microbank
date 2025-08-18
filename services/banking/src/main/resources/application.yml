@@ -18,6 +18,8 @@ spring:
       ack-mode: MANUAL_IMMEDIATE
 server:
   port: 8080
+  webflux:
+    base-path: /banking
 
 jwt:
   secret: ${SPRING_JWT_SECRET}
@@ -25,3 +27,9 @@ jwt:
 # logging:
 #   level:
 #     root: debug
+
+springdoc:
+  api-docs:
+    path: /banking/api-docs
+  swagger-ui:
+    path: /banking/swagger-ui.html

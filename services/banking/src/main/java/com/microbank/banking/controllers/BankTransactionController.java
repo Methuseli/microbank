@@ -2,7 +2,6 @@ package com.microbank.banking.controllers;
 
 import java.util.UUID;
 
-import org.springframework.boot.autoconfigure.pulsar.PulsarProperties.Transaction;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,7 +16,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping("api/v1/bank-transactions")
+@RequestMapping("/banking/api/v1/bank-transactions")
 @AllArgsConstructor
 public class BankTransactionController {
 
