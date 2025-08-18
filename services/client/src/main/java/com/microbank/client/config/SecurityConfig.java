@@ -120,7 +120,9 @@ public class SecurityConfig {
                 .map(Object::toString)
                 .collect(Collectors.toList());
         List<SimpleGrantedAuthority> authorities = roles.stream()
-                .map(r -> new SimpleGrantedAuthority("ROLE_" + r))
+                .map(r -> {
+                    log.info("Role {}", r);
+                    return new SimpleGrantedAuthority("ROLE_" + r);})
                 .collect(Collectors.toList());
 
         return new UsernamePasswordAuthenticationToken(username, null, authorities);
