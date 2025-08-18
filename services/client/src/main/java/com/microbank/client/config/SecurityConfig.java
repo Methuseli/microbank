@@ -56,7 +56,7 @@ public class SecurityConfig {
                 )
                 .authorizeExchange(ex -> ex
                 .pathMatchers("/client/api/v1/auth/**").permitAll()
-                .pathMatchers("/client/api/v1/users/admin/**").hasRole("ADMIN")
+                .pathMatchers("/client/api/v1/users/admin/**").hasAuthority("ADMIN")
                 .anyExchange().authenticated())
                 .addFilterAt(jwtAuthFilter(), SecurityWebFiltersOrder.AUTHENTICATION)
                 .build();
@@ -120,7 +120,7 @@ public class SecurityConfig {
                 .map(Object::toString)
                 .collect(Collectors.toList());
         List<SimpleGrantedAuthority> authorities = roles.stream()
-                .map(SimpleGrantedAuthority::new)
+                .map(r -> new SimpleGrantedAuthority("ROLE_" + r))
                 .collect(Collectors.toList());
 
         return new UsernamePasswordAuthenticationToken(username, null, authorities);

@@ -299,7 +299,7 @@ const Dashboard: React.FC = () => {
                                                             {transaction.description}
                                                         </p>
                                                         <p className="text-sm text-gray-500">
-                                                            {formatDate(transaction.timestamp)}
+                                                            {formatDate(transaction.createdAt)}
                                                         </p>
                                                     </div>
                                                 </div>
