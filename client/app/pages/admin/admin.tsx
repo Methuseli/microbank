@@ -49,7 +49,7 @@ const AdminPanel: React.FC = () => {
   }, [user]);
 
   if (user?.role !== 'ADMIN') {
-    return <Navigate to="/dashboard" />;
+    return <Navigate to="/frontend/dashboard" />;
   }
 
 
