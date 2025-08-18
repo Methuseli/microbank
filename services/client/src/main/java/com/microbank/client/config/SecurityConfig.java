@@ -55,7 +55,7 @@ public class SecurityConfig {
                 })
                 )
                 .authorizeExchange(ex -> ex
-                .pathMatchers("/client/api/v1/auth/**", "/client/swagger-ui.html", "/client/api-docs/**", "/client/webjars/**", "/client/swagger-ui/index.html").permitAll()
+                .pathMatchers("/client/api/v1/auth/**", "/client/swagger-ui.html", "/client/api-docs/**", "/client/webjars/**", "/client/swagger-ui/**").permitAll()
                 .pathMatchers("/client/api/v1/users/admin/**").hasAuthority("ROLE_ADMIN")
                 .anyExchange().authenticated())
                 .addFilterAt(jwtAuthFilter(), SecurityWebFiltersOrder.AUTHENTICATION)
