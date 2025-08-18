@@ -21,12 +21,13 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path: string) => path.replace(/^\/banking/, '')
       }
-    }
-  },
-  allowedHosts: [
+    },
+    allowedHosts: [
       'frontend',          // service name inside Docker
       'localhost',         // local dev
       '127.0.0.1',
       '13.59.11.243.sslip.io' // your public domain/IP
     ]
+  },
+  
 });
