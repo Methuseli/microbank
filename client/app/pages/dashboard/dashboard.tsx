@@ -163,7 +163,7 @@ const Dashboard: React.FC = () => {
                                 onClick={() => {
                                     navigate("/frontend/admin")
                                 }}
-                                className="text-sm text-green-500 hover:text-green-700 transition-colors duration-200"
+                                className="text-sm text-blue-500 hover:text-blue-700 transition-colors duration-200"
                             >
                                 Admin
                             </button>}

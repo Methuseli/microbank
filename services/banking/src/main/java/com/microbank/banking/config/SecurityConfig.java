@@ -55,6 +55,7 @@ public class SecurityConfig {
                 })
                 )
                 .authorizeExchange(exchanges -> exchanges
+                .pathMatchers("/banking/v3/api-docs").permitAll()
                 .anyExchange().authenticated()
                 )
                 .addFilterAt(jwtAuthFilter(), SecurityWebFiltersOrder.AUTHENTICATION)

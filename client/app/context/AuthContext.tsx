@@ -109,6 +109,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     axios.post(`${baseUrl}auth/logout`, {userId: user?.id}, { headers: { Authorization: `Bearer ${token}` } })
       .then(() => {
         setUser(null);
+        localStorage.removeItem("token");
       })
       .catch((err) => {
         console.log("Error logging out ", err);
