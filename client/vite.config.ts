@@ -9,5 +9,11 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5173
-  }
+  },
+  allowedHosts: [
+      'frontend',          // service name inside Docker
+      'localhost',         // local dev
+      '127.0.0.1',
+      '13.59.11.243.sslip.io' // your public domain/IP
+    ]
 });
