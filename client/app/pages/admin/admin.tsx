@@ -54,7 +54,7 @@ const AdminPanel: React.FC = () => {
 
 
   const toggleBlacklist = (clientId: string, blacklisted: boolean) => {
-    axios.patch(`${baseUrl}admin/${clientId}`, { blacklisted: !blacklisted }, { headers: { Authorization: `Bearer ${token}` } }).
+    axios.patch(`${baseUrl}users/admin/${clientId}`, { blacklisted: !blacklisted }, { headers: { Authorization: `Bearer ${token}` } }).
       then((response) => {
         if (response.status === 200) {
           toast.success(`Client ${!blacklisted ? 'blocked' : 'unblocked'} successfully.`);
