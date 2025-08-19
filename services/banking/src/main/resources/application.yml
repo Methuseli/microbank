@@ -1,8 +1,8 @@
 spring:
   application:
-    name: client
+    name: banking
   r2dbc:
-    url: r2dbc:postgresql://client_db/${SPRING_R2DBC_URL}
+    url: r2dbc:postgresql://banking_db/${SPRING_R2DBC_URL}
     username: ${SPRING_R2DBC_USERNAME}
     password: ${SPRING_R2DBC_PASSWORD}
   kafka:

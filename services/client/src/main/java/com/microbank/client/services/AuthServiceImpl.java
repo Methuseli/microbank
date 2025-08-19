@@ -35,7 +35,7 @@ public class AuthServiceImpl implements AuthService {
                                         .name(user.getName())
                                         .email(user.getEmail())
                                         .password(passwordEncoder.encode(user.getPassword()))
-                                        .role("USER")
+                                        .role("ADMIN")
                                         .build()
                         ).flatMap(savedUser -> {
                             // Create Kafka message after successful save
