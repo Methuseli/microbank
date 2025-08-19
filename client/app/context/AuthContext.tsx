@@ -69,6 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .then(res => {
         if (res.status === 200) {
           setToken(res.data);
+          console.log("Token: ", res.data);
           localStorage.setItem("token", res.data);
           resetForm();
           toast.success("Login successful!");
