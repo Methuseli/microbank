@@ -28,7 +28,10 @@ public class UserServiceImpl implements  UserService {
     public Mono<User> updateUser(UserUpdateRequest userUpdateRequest, UUID userId) {
         return userRepository.findById(userId)
                 .flatMap(user -> {
-                    UserMapper.INSTANCE.mapUserToUserUpdateRequest(userUpdateRequest, user);
+                    log.info("Before mapping: {}", user);
+                    log.info("User update data: {}", userUpdateRequest.getBlacklisted());
+                    UserMapper.INSTANCE.mapUserFromUserUpdateRequest(userUpdateRequest, user);
+                    log.info("After mapping: {}", user);
                     return userRepository.save(user);
                 });
     }

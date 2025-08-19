@@ -18,10 +18,12 @@ import com.microbank.banking.services.BankAccountServiceImpl;
 import com.microbank.banking.services.BankTransactionService;
 import com.microbank.banking.services.BankTransactionServiceImpl;
 
+import lombok.extern.slf4j.Slf4j;
 import reactor.kafka.receiver.KafkaReceiver;
 import reactor.kafka.receiver.ReceiverOptions;
 
 @Configuration
+@Slf4j
 public class KafkaConfig {
 
     @Autowired
@@ -35,6 +37,7 @@ public class KafkaConfig {
 
     @Bean
     public ReceiverOptions<String, String> receiverOptions() {
+        log.info("Creating Kafka ReceiverOptions for bootstrap servers: {}", bootstrapServers);
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, "banking-group");

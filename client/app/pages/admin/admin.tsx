@@ -5,32 +5,25 @@ import {
   ShieldOff,
   Search,
   Filter,
-  DollarSign,
   AlertTriangle,
   CheckCircle,
   XCircle
 } from 'lucide-react';
 import type { User } from '~/types';
 import { useAuth } from '~/context/AuthContext';
-import { Navigate } from 'react-router';
+import { Navigate, useNavigate } from 'react-router';
 import axios from 'axios';
 import { baseUrl } from '~/config';
 import { Bounce, toast, ToastContainer } from 'react-toastify';
-
-interface AdminPanelProps {
-  currentUser: User;
-  onLogout: () => void;
-}
 
 const AdminPanel: React.FC = () => {
   const [clients, setClients] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'blacklisted'>('all');
-  const [selectedClient, setSelectedClient] = useState<User | null>(null);
-  const [showClientModal, setShowClientModal] = useState(false);
   const [blacklisting, setBlacklisting] = useState(false);
+  const navigate = useNavigate();
 
-  const { user, logout, token } = useAuth();
+  const { user, logout, token, loading } = useAuth();
 
   const fetchClients = () => {
     axios.get(`${baseUrl}users/admin`, { headers: { Authorization: `Bearer ${token}` } })
@@ -54,7 +47,8 @@ const AdminPanel: React.FC = () => {
 
 
   const toggleBlacklist = (clientId: string, blacklisted: boolean) => {
-    axios.patch(`${baseUrl}admin/${clientId}`, { blacklisted: !blacklisted }, { headers: { Authorization: `Bearer ${token}` } }).
+    setBlacklisting(true);
+    axios.patch(`${baseUrl}users/admin/${clientId}`, { blacklisted: !blacklisted }, { headers: { Authorization: `Bearer ${token}` } }).
       then((response) => {
         if (response.status === 200) {
           toast.success(`Client ${!blacklisted ? 'blocked' : 'unblocked'} successfully.`);
@@ -63,7 +57,7 @@ const AdminPanel: React.FC = () => {
       }).catch((error) => {
         toast.error(`Failed to ${!blacklisted ? 'block' : 'unblock'} client.`);
         console.error("Error updating client status:", error);
-      })
+      }).finally(() => { setBlacklisting(false); });
   };
 
   const filteredClients = clients.filter(client => {
@@ -78,13 +72,6 @@ const AdminPanel: React.FC = () => {
 
     return matchesSearch && matchesFilter;
   });
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -133,8 +120,9 @@ const AdminPanel: React.FC = () => {
               <button
                 onClick={logout}
                 className="text-sm text-gray-500 hover:text-gray-700 transition-colors duration-200"
+                disabled={loading}
               >
-                Sign Out
+                {loading ? 'Signing Out...' : 'Sign Out'}
               </button>
             </div>
           </div>
@@ -275,7 +263,7 @@ const AdminPanel: React.FC = () => {
                       {formatDate(client.createdAt)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
+                      {client?.id !== user?.id && <button
                         onClick={() => toggleBlacklist(client.id, client.blacklisted)}
                         className={toggleClassName(client)}
                         disabled={blacklisting}
@@ -291,7 +279,7 @@ const AdminPanel: React.FC = () => {
                             Block
                           </>
                         )}
-                      </button>
+                      </button>}
                     </td>
                   </tr>
                 ))}

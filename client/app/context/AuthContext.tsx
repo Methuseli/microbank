@@ -106,13 +106,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = () => {
+    setLoading(true);
     axios.post(`${baseUrl}auth/logout`, {userId: user?.id}, { headers: { Authorization: `Bearer ${token}` } })
       .then(() => {
         setUser(null);
+        setToken(null);
         localStorage.removeItem("token");
       })
       .catch((err) => {
         console.log("Error logging out ", err);
+      }).finally(() => {
+        setLoading(false);
       });
   };
 

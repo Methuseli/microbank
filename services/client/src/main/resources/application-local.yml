@@ -1,0 +1,17 @@
+spring:
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5434/client_data
+    username: client_user
+    password: DvdR1YDoP2wcjI8r
+  kafka:
+    bootstrap-servers: localhost:9092
+
+server:
+  port: 8081   # use a different port locally if needed
+
+jwt:
+  secret: 73e5cddb1d3af06ca4c9b3b30f861269ba475c8529a4f8de2998b48abee2d78c
+
+logging:
+  level:
+    root: debug

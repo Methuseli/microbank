@@ -27,7 +27,7 @@ const Dashboard: React.FC = () => {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const navigate = useNavigate();
 
-    const { user, logout, token } = useAuth();
+    const { user, logout, token, loading } = useAuth();
     const [bankAccount, setBankAccount] = useState<BankAccount>({
         id: '1',
         userId: '',
@@ -121,6 +121,13 @@ const Dashboard: React.FC = () => {
         return activeTab === 'deposit' ? 'Deposit' : 'Withdraw';
     }
 
+    const checkWithdrawalLimit = (amount: number) => {
+        if (amount > bankAccount.balance) {
+            return "Insufficient funds!!!";
+        }
+        return false;
+    };
+
     if (user?.blacklisted) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -135,8 +142,9 @@ const Dashboard: React.FC = () => {
                     <button
                         onClick={logout}
                         className="w-full bg-red-600 text-white py-3 px-4 rounded-xl hover:bg-red-700 transition-colors duration-200"
+                        disabled={loading}
                     >
-                        Sign Out
+                        {loading ? 'Signing Out...' : 'Sign Out'}
                     </button>
                 </div>
             </div>
@@ -169,9 +177,10 @@ const Dashboard: React.FC = () => {
                             </button>}
                             <button
                                 onClick={logout}
-                                className="text-sm text-gray-500 hover:text-gray-700 transition-colors duration-200"
+                                className="border p-2 rounded border-red-300 hover:bg-red-100 text-sm text-red-500 hover:text-red-700 transition-colors duration-200"
+                                disabled={loading}
                             >
-                                Sign Out
+                                {loading ? 'Signing Out...' : 'Sign Out'}
                             </button>
                         </div>
                     </div>
@@ -238,6 +247,9 @@ const Dashboard: React.FC = () => {
 
                                     return (
                                         <Form className="space-y-4">
+                                            {activeTab === 'withdraw' && checkWithdrawalLimit(values.amount) && (
+                                                <div className="flex items-center justify-center text-red-500 text-sm">{checkWithdrawalLimit(values.amount)}</div>
+                                            )}
                                             <FormController
                                                 formData={[
                                                     ...transactionForm,
@@ -254,7 +266,7 @@ const Dashboard: React.FC = () => {
                                                             } disabled:opacity-50 disabled:cursor-not-allowed`,
                                                         spanClassName: "flex items-center justify-center",
                                                         icon: false,
-                                                        disabled: isSubmitting || !isValid
+                                                        disabled: isSubmitting || !isValid || (activeTab === 'withdraw' && values.amount > bankAccount.balance)
                                                     }
                                                 ]} />
                                         </Form>

@@ -13,7 +13,7 @@ export interface Transaction {
   accountId: string;
   transactionType: 'deposit' | 'withdrawal';
   amount: number;
-  timestamp: string;
+  createdAt: string;
   description?: string;
 }
 

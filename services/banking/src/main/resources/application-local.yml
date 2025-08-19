@@ -1,0 +1,13 @@
+spring:
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/banking_data
+    username: postgres
+    password: "#1Foofighters"
+  kafka:
+    bootstrap-servers: localhost:9092
+
+server:
+  port: 8080   # use a different port locally if needed
+
+jwt:
+  secret: 73e5cddb1d3af06ca4c9b3b30f861269ba475c8529a4f8de2998b48abee2d78c
