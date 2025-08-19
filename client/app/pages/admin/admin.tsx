@@ -23,10 +23,10 @@ const AdminPanel: React.FC = () => {
   const [blacklisting, setBlacklisting] = useState(false);
   const navigate = useNavigate();
 
-  const { user, logout, token, loading } = useAuth();
+  const { user, logout, loading } = useAuth();
 
   const fetchClients = () => {
-    axios.get(`${baseUrl}users/admin`, { headers: { Authorization: `Bearer ${token}` } })
+    axios.get(`${baseUrl}users/admin`, { withCredentials: true })
       .then(response => {
         setClients(response.data);
       })
@@ -48,8 +48,8 @@ const AdminPanel: React.FC = () => {
 
   const toggleBlacklist = (clientId: string, blacklisted: boolean) => {
     setBlacklisting(true);
-    axios.patch(`${baseUrl}users/admin/${clientId}`, { blacklisted: !blacklisted }, { headers: { Authorization: `Bearer ${token}` } }).
-      then((response) => {
+    axios.patch(`${baseUrl}users/admin/${clientId}`, { blacklisted: !blacklisted }, { withCredentials: true })
+      .then((response) => {
         if (response.status === 200) {
           toast.success(`Client ${!blacklisted ? 'blocked' : 'unblocked'} successfully.`);
           fetchClients();

@@ -1,9 +1,11 @@
 package com.microbank.client.controllers;
 
-import java.util.UUID;
+import java.time.Duration;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,6 +29,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final JWTUtil jwtUtil;
+    private static final String AUTH_TOKEN_COOKIE_NAME = "auth_token";
 
     @PostMapping("/register")
     public Mono<ResponseEntity<User>> register(@RequestBody User user) {
@@ -35,24 +38,33 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public Mono<ResponseEntity<String>> login(@RequestBody LoginRequest loginRequest) {
+    public Mono<ResponseEntity<User>> login(@RequestBody LoginRequest loginRequest, ServerHttpResponse response) {
         return authService.login(loginRequest.getEmail(), loginRequest.getPassword())
                 .map(user -> {
-                    // Generate JWT token and return in response body
-                    String token = jwtUtil.generateToken(user);
-                    return ResponseEntity.ok(token);
+                    ResponseCookie cookie = ResponseCookie.from(AUTH_TOKEN_COOKIE_NAME, jwtUtil.generateToken(user))
+                            .httpOnly(true)
+                            .secure(false)
+                            .path("/")
+                            .maxAge(Duration.ofHours(24))
+                            .sameSite("Lax")
+                            .build();
+                    response.addCookie(cookie);
+                    return ResponseEntity.ok(user);
                 });
     }
 
     @PostMapping("/logout")
-    public Mono<ResponseEntity<Void>> logout(@RequestBody LogoutRequest logoutRequest, @org.springframework.web.bind.annotation.RequestHeader("Authorization") String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
-        }
-        String token = authHeader.substring(7);
-        log.info("User {} is logging out, token {}", logoutRequest.getUserId(), token);
-        // Token-based logout: invalidate token server-side if implemented
-        return authService.logout(token, logoutRequest.getUserId())
+    public Mono<ResponseEntity<Void>> logout(@RequestBody LogoutRequest logoutRequest, ServerHttpResponse response) {
+        return authService.logout(AUTH_TOKEN_COOKIE_NAME, logoutRequest.getUserId())
+                .doOnSuccess(aVoid ->
+                    response.addCookie(ResponseCookie.from(AUTH_TOKEN_COOKIE_NAME, "")
+                            .httpOnly(true)
+                            .secure(false)
+                            .path("/")
+                            .sameSite("Lax")
+                            .maxAge(0)
+                            .build())
+                )
                 .thenReturn(ResponseEntity.ok().build());
     }
 }

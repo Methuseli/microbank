@@ -18,7 +18,6 @@ interface AuthContextType {
   logout: () => void;
   loading: boolean;
   fetchUserFromSession: () => void;
-  token: string | null;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -27,7 +26,6 @@ const AuthContext = createContext<AuthContextType>({
   logout: () => { },
   loading: false,
   fetchUserFromSession: () => { },
-  token: null,
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -36,23 +34,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const [token, setToken] = useState<string | null>(null);
-
-  useEffect(() => {
-    const storedToken = localStorage.getItem("token");
-    if (storedToken) {
-      setToken(storedToken);
-    }
-  }, []);
 
   useEffect(() => {
     if (user) {
       navigate("/frontend/dashboard");
       return;
     }
-    if (!token) return;
     fetchUserFromSession();
-  }, [user, token]);
+  }, [user]);
 
   console.log("User:   ", user);
 
@@ -68,9 +57,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     axios.post(`${baseUrl}auth/login`, credentials)
       .then(res => {
         if (res.status === 200) {
+<<<<<<< Updated upstream
           setToken(res.data);
           console.log("Token: ", res.data);
           localStorage.setItem("token", res.data);
+=======
+          setUser(res.data);
+>>>>>>> Stashed changes
           resetForm();
           toast.success("Login successful!");
           navigate("/frontend/dashboard");
@@ -89,7 +82,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchUserFromSession = () => {
     setLoading(true);
-    axios.get(`${baseUrl}users/current-user`, { headers: { Authorization: `Bearer ${token}` } })
+    axios.get(`${baseUrl}users/current-user`, { withCredentials: true })
       .then(res => {
         if (res.status === 200) {
           setUser(res.data);
@@ -108,11 +101,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     setLoading(true);
-    axios.post(`${baseUrl}auth/logout`, {userId: user?.id}, { headers: { Authorization: `Bearer ${token}` } })
+    axios.post(`${baseUrl}auth/logout`, {userId: user?.id}, { withCredentials: true })
       .then(() => {
         setUser(null);
-        setToken(null);
-        localStorage.removeItem("token");
       })
       .catch((err) => {
         console.log("Error logging out ", err);
@@ -123,7 +114,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 
   const contextValue = React.useMemo(
-    () => ({ user, login, logout, loading, fetchUserFromSession, token }),
+    () => ({ user, login, logout, loading, fetchUserFromSession }),
     [user, loading]
   );
 

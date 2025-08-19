@@ -94,11 +94,11 @@ docker-compose up client_db banking_db kafka
 
 # Run client service
 cd services/client
-./mvnw spring-boot:run
+./mvn spring-boot:run
 
 # Run banking service (in another terminal)
 cd services/banking
-./mvnw spring-boot:run
+./mvn spring-boot:run
 ```
 
 ### API END POINTS FOR BACKEND SERVICES:
@@ -121,14 +121,14 @@ npm run dev
 ```bash
 # Client service tests
 cd services/client
-./mvnw test
+./mvn test
 
 # Banking service tests
 cd services/banking
-./mvnw test
+./mvn test
 
 # Run tests with coverage
-./mvnw test jacoco:report
+./mvn test jacoco:report
 ```
 
 ### Frontend Tests
