@@ -2,13 +2,13 @@ package com.microbank.banking.config;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
@@ -65,13 +65,11 @@ public class SecurityConfig {
     @Bean
     WebFilter jwtAuthFilter() {
         return (exchange, chain) -> {
-            String authHeader = exchange.getRequest().getHeaders().getFirst("Authorization");
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                // No Bearer token provided; proceed without authentication
-                return chain.filter(exchange);
+            HttpCookie cookie = exchange.getRequest().getCookies().getFirst("auth_token");
+            if (cookie == null) {
+                return chain.filter(exchange); // Proceed without auth
             }
-
-            String token = authHeader.substring(7); // Remove "Bearer " prefix
+            String token = cookie.getValue();
 
             try {
                 Authentication auth = validateToken(token); // Validate JWT
@@ -89,8 +87,9 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowCredentials(false);
-        config.addAllowedOrigin("*");
+        config.setAllowCredentials(true);
+        config.addAllowedOrigin("http://localhost:5173/");
+        config.addAllowedOrigin("http://13.59.11.243.sslip.io/");
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
     
@@ -109,13 +108,11 @@ public class SecurityConfig {
                 .getPayload();
 
         String username = claims.getSubject();
-        List<?> rawRoles = claims.get("roles", List.class);
-        List<String> roles = rawRoles == null ? List.of() : rawRoles.stream()
-                .map(Object::toString)
-                .collect(Collectors.toList());
-        List<SimpleGrantedAuthority> authorities = roles.stream()
-                .map(SimpleGrantedAuthority::new)
-                .collect(Collectors.toList());
+        log.info("Token claims for user {}: {}", username, claims);
+        String role = claims.get("role", String.class);
+        List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
+
+        log.info("Authorities granted for {}: {}", username, authorities);
 
         return new UsernamePasswordAuthenticationToken(username, null, authorities);
     }

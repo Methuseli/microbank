@@ -10,7 +10,7 @@ import {
     Eye,
     EyeOff
 } from 'lucide-react';
-import type { Transaction, BankAccount } from "~/types";
+import type { Transaction, BankAccount, User } from "~/types";
 import axios from "axios";
 import { bankingUrl } from '~/config';
 import { useAuth } from '~/context/AuthContext';
@@ -27,7 +27,7 @@ const Dashboard: React.FC = () => {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const navigate = useNavigate();
 
-    const { user, logout, token, loading } = useAuth();
+    const { user, logout, loading } : { user: User | null; logout: () => void; loading: boolean; } = useAuth();
     const [bankAccount, setBankAccount] = useState<BankAccount>({
         id: '1',
         userId: '',
@@ -37,8 +37,8 @@ const Dashboard: React.FC = () => {
     });
 
     useEffect(() => {
-        if (!user) return;
-        axios.get(`${bankingUrl}bank-accounts/${user.id}`, { headers: { Authorization: `Bearer ${token}` } })
+        if (!user && !user?.blacklisted) return;
+        axios.get(`${bankingUrl}bank-accounts/${user.id}`, { withCredentials: true })
             .then(response => {
                 setBankAccount(response.data);
             })
@@ -50,7 +50,7 @@ const Dashboard: React.FC = () => {
     // Mock transaction data
     useEffect(() => {
         if (bankAccount.id === "1") return;
-        axios.get(`${bankingUrl}bank-transactions/${bankAccount?.id}/transactions`, { headers: { Authorization: `Bearer ${token}` } })
+        axios.get(`${bankingUrl}bank-transactions/${bankAccount?.id}/transactions`, { withCredentials: true })
             .then(response => {
                 setTransactions(response.data);
             })
@@ -73,7 +73,7 @@ const Dashboard: React.FC = () => {
         setSubmitting(true);
         const url = `${bankingUrl}bank-accounts/${bankAccount?.id}/${activeTab}`;
         axios
-            .patch(url, { amount: values.amount, description: values.description }, { headers: { Authorization: `Bearer ${token}` } })
+            .patch(url, { amount: values.amount, description: values.description }, { withCredentials: true })
             .then(response => {
                 if (response.status === 200) {
                     toast.success("Transaction was successful!!!");
