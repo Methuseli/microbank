@@ -115,7 +115,7 @@ npm install
 npm run dev
 ```
 
-## 🧪 Running Tests
+## 🧪 Running Tests (To run tests, run them outside the docker env)
 
 ### Backend Tests
 ```bash
@@ -290,35 +290,54 @@ docker-compose logs -f
 ### nginx configurations
 ```
 server {
-        listen 443 ssl;
-        server_name _;
+    listen 80;
+    server_name _;
+    client_max_body_size 100M;
 
-        ssl_certificate /etc/nginx/ssl/server.crt;
-        ssl_certificate_key /etc/nginx/ssl/server.key
+    # Frontend Dev Server (Vite)
+    location /frontend/ {
+        proxy_pass http://frontend:5173/frontend/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
 
-        location /client/ {
-                proxy_pass http://127.0.0.1:8081/;
-                proxy_set_header Host $host;
-                proxy_set_header X-Real-IP $remote_addr;
-                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                proxy_set_header X-Forwarded-Proto $scheme;
-        }
+        # WebSocket support for Vite HMR
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
 
-        location /banking/ {
-                proxy_pass http://127.0.0.1:8080/;
-                proxy_set_header Host $host;
-                proxy_set_header X-Real-IP $remote_addr;
-                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                proxy_set_header X-Forwarded-Proto $scheme;
-        }
+    # Client API Service
+    location /client/ {
+        proxy_pass http://client-service:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
 
-        location /frontend/ {
-                proxy_pass http://127.0.0.1:3000/;
-                proxy_set_header Host $host;
-                proxy_set_header X-Real-IP $remote_addr;
-                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                proxy_set_header X-Forwarded-Proto $scheme;
-        }
+    # Banking API Service
+    location /banking/ {
+        proxy_pass http://banking-service:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
 
+    # Redirect root to frontend
+    location = / {
+        return 302 /frontend/;
+    }
+
+    # SPA fallback
+    location / {
+        try_files $uri $uri/ /frontend/index.html;
+    }
 }
 ```
+
+### Recommendations
+
+For secure storage of JWTs use http only cookie, this will also prevent XSS to some degree.

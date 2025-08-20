@@ -119,7 +119,7 @@ const AdminPanel: React.FC = () => {
               </button>}
               <button
                 onClick={logout}
-                className="text-sm text-gray-500 hover:text-gray-700 transition-colors duration-200"
+                className="border p-2 rounded border-red-300 hover:bg-red-100 text-sm text-red-500 hover:text-red-700 transition-colors duration-200"
                 disabled={loading}
               >
                 {loading ? 'Signing Out...' : 'Sign Out'}

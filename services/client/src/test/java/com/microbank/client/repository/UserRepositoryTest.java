@@ -1,42 +1,52 @@
-// package com.microbank.client.repository;
+package com.microbank.client.repository;
 
-// import com.microbank.client.entity.User;
-// import org.junit.jupiter.api.Test;
-// import org.springframework.beans.factory.annotation.Autowired;
-// import org.springframework.boot.test.autoconfigure.data.r2dbc.DataR2dbcTest;
-// import reactor.core.publisher.Mono;
-// import reactor.test.StepVerifier;
+import com.microbank.client.entity.User;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-// import java.util.UUID;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
-// @DataR2dbcTest
-// class UserRepositoryTest {
+import static org.mockito.Mockito.*;
 
-//     @Autowired
-//     private UserRepository userRepository;
+import java.util.UUID;
 
-//     @Test
-//     void findByEmail_shouldReturnUser_ifExists() {
-//         User testUser = User.builder()
-//                 .id(UUID.randomUUID())
-//                 .name("Alice")
-//                 .email("alice@example.com")
-//                 .password("hashed")
-//                 .role("USER")
-//                 .build();
+@ExtendWith(SpringExtension.class)
+class UserRepositoryTest {
 
-//         Mono<User> flow = userRepository.save(testUser)
-//                 .then(userRepository.findByEmail("alice@example.com"));
+    @Mock
+    private UserRepository userRepository;
 
-//         StepVerifier.create(flow)
-//                 .expectNextMatches(user -> user.getName().equals("Alice") &&
-//                         user.getEmail().equals("alice@example.com"))
-//                 .verifyComplete();
-//     }
+    @Test
+    void findByEmail_shouldReturnUser_ifExists() {
+        User testUser = User.builder()
+                .id(UUID.randomUUID())
+                .name("Alice")
+                .email("alice@example.com")
+                .password("hashed")
+                .role("USER")
+                .build();
 
-//     @Test
-//     void findByEmail_shouldReturnEmpty_ifNotExists() {
-//         StepVerifier.create(userRepository.findByEmail("nonexistent@example.com"))
-//                 .verifyComplete();
-//     }
-// }
+        // Mock the behavior
+        when(userRepository.save(testUser)).thenReturn(Mono.just(testUser));
+        when(userRepository.findByEmail("alice@example.com")).thenReturn(Mono.just(testUser));
+
+        Mono<User> flow = userRepository.save(testUser)
+                .then(userRepository.findByEmail("alice@example.com"));
+
+        StepVerifier.create(flow)
+                .expectNextMatches(user -> user.getName().equals("Alice")
+                && user.getEmail().equals("alice@example.com"))
+                .verifyComplete();
+    }
+
+    @Test
+    void findByEmail_shouldReturnEmpty_ifNotExists() {
+        when(userRepository.findByEmail("nonexistent@example.com")).thenReturn(Mono.empty());
+
+        StepVerifier.create(userRepository.findByEmail("nonexistent@example.com"))
+                .verifyComplete();
+    }
+}
