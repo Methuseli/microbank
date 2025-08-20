@@ -30,19 +30,17 @@ public class AuthServiceImpl implements AuthService {
         return userRepository.findByEmail(user.getEmail())
                 .flatMap(existing -> Mono.<User>error(new RuntimeException("User already exists")))
                 .switchIfEmpty(
-                        userRepository.save(
-                                User.builder()
-                                        .name(user.getName())
-                                        .email(user.getEmail())
-                                        .password(passwordEncoder.encode(user.getPassword()))
-                                        .role("ADMIN")
-                                        .build()
-                        ).flatMap(savedUser -> {
-                            // Create Kafka message after successful save
-                            return sendUserCreatedEvent(savedUser.getId().toString())
-                                    .thenReturn(savedUser);  // Return user after sending
-                        })
+                        Mono.defer(() -> userRepository.save(
+                        User.builder()
+                                .name(user.getName())
+                                .email(user.getEmail())
+                                .password(passwordEncoder.encode(user.getPassword()))
+                                .role("USER")
+                                .build()
+                ).flatMap(savedUser -> sendUserCreatedEvent(savedUser.getId().toString())
+                        .thenReturn(savedUser)))
                 );
+
     }
 
     private Mono<Void> sendUserCreatedEvent(String userId) {

@@ -1,131 +1,135 @@
-// package com.microbank.client.services;
+package com.microbank.client.services;
 
-// import com.microbank.client.entity.User;
-// import com.microbank.client.entity.BlacklistedToken;
-// import com.microbank.client.repository.UserRepository;
-// import com.microbank.client.repository.BlacklistedTokenRepository;
-// import org.apache.kafka.clients.producer.ProducerRecord;
-// import org.junit.jupiter.api.BeforeEach;
-// import org.junit.jupiter.api.Test;
-// import org.mockito.*;
-// import org.springframework.security.crypto.password.PasswordEncoder;
-// import reactor.core.publisher.Mono;
-// import reactor.kafka.sender.KafkaSender;
-// import reactor.test.StepVerifier;
+import com.microbank.client.entity.User;
+import com.microbank.client.entity.BlacklistedToken;
+import com.microbank.client.repository.UserRepository;
 
-// import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 
-// import static org.mockito.ArgumentMatchers.*;
-// import static org.mockito.Mockito.*;
+import com.microbank.client.repository.BlacklistedTokenRepository;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.*;
+import org.reactivestreams.Publisher;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
-// class AuthServiceImplTest {
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.kafka.sender.KafkaSender;
+import reactor.test.StepVerifier;
 
-//     @Mock
-//     private UserRepository userRepository;
+import java.util.UUID;
 
-//     @Mock
-//     private BlacklistedTokenRepository blacklistedTokenRepository;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
-//     @Mock
-//     private PasswordEncoder passwordEncoder;
 
-//     @Mock
-//     private KafkaSender<String, String> kafkaSender;
+@Slf4j
+class AuthServiceImplTest {
 
-//     @InjectMocks
-//     private AuthServiceImpl authService;
+    @Mock
+    private UserRepository userRepository;
 
-//     private User testUser;
+    @Mock
+    private BlacklistedTokenRepository blacklistedTokenRepository;
 
-//     @BeforeEach
-//     void setUp() {
-//         MockitoAnnotations.openMocks(this);
-//         testUser = User.builder()
-//                 .id(UUID.randomUUID())
-//                 .name("John Doe")
-//                 .email("john@example.com")
-//                 .password("rawPassword")
-//                 .role("USER")
-//                 .build();
-//     }
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
-//     @Test
-//     void register_shouldSaveNewUserAndSendKafkaEvent() {
-//         when(userRepository.findByEmail(testUser.getEmail())).thenReturn(Mono.empty());
-//         when(passwordEncoder.encode("rawPassword")).thenReturn("encodedPassword");
-//         when(userRepository.save(any(User.class))).thenAnswer(inv -> {
-//             User u = inv.getArgument(0);
-//             u.setId(UUID.randomUUID());
-//             return Mono.just(u);
-//         });
-//         when(kafkaSender.send(any(Mono.class))).thenReturn(Mono.empty());
+    @Mock
+    private KafkaSender<String, String> kafkaSender;
 
-//         StepVerifier.create(authService.register(testUser))
-//                 .expectNextMatches(user ->
-//                         user.getEmail().equals("john@example.com")
-//                                 && user.getPassword().equals("encodedPassword")
-//                                 && user.getRole().equals("USER"))
-//                 .verifyComplete();
+    @InjectMocks
+    private AuthServiceImpl authService;
 
-//         verify(userRepository).save(any(User.class));
-//         verify(kafkaSender).send(any(Mono.class));
-//     }
+    private User testUser;
 
-//     @Test
-//     void register_shouldErrorIfUserExists() {
-//         when(userRepository.findByEmail(testUser.getEmail())).thenReturn(Mono.just(testUser));
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+        testUser = User.builder()
+                .id(UUID.randomUUID())
+                .name("John Doe")
+                .email("john@example.com")
+                .password("rawPassword")
+                .role("USER")
+                .build();
+    }
 
-//         StepVerifier.create(authService.register(testUser))
-//                 .expectErrorMatches(e -> e instanceof RuntimeException &&
-//                         e.getMessage().equals("User already exists"))
-//                 .verify();
+    @Test
+    void register_shouldSaveNewUserAndSendKafkaEvent() {
+        when(userRepository.findByEmail(testUser.getEmail())).thenReturn(Mono.empty());
+        when(passwordEncoder.encode("rawPassword")).thenReturn("encodedPassword");
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> {
+            User u = inv.getArgument(0);
+            u.setId(UUID.randomUUID());
+            return Mono.just(u);
+        });
 
-//         verify(userRepository, never()).save(any(User.class));
-//     }
+        // Corrected KafkaSender mock
+        when(kafkaSender.send(any(Publisher.class))).thenReturn(Flux.empty());
 
-//     @Test
-//     void login_shouldReturnUserWhenCredentialsMatch() {
-//         when(userRepository.findByEmail(testUser.getEmail())).thenReturn(Mono.just(testUser));
-//         when(passwordEncoder.matches("rawPassword", testUser.getPassword())).thenReturn(true);
+        StepVerifier.create(authService.register(testUser))
+                .expectNextMatches(user
+                        -> user.getEmail().equals("john@example.com")
+                && user.getPassword().equals("encodedPassword")
+                && user.getRole().equals("USER"))
+                .verifyComplete();
 
-//         StepVerifier.create(authService.login("john@example.com", "rawPassword"))
-//                 .expectNext(testUser)
-//                 .verifyComplete();
-//     }
+        verify(userRepository).save(any(User.class));
+        verify(kafkaSender).send(any(Publisher.class));
+    }
 
-//     @Test
-//     void login_shouldErrorWhenPasswordDoesNotMatch() {
-//         when(userRepository.findByEmail(testUser.getEmail())).thenReturn(Mono.just(testUser));
-//         when(passwordEncoder.matches("wrong", testUser.getPassword())).thenReturn(false);
+    @Test
+    void register_shouldErrorIfUserExists() {
+        when(userRepository.findByEmail(testUser.getEmail())).thenReturn(Mono.just(testUser));
+        log.info("User {} ", testUser);
+        StepVerifier.create(authService.register(testUser))
+                .expectErrorMatches(e -> e instanceof RuntimeException &&
+                        e.getMessage().equals("User already exists"))
+                .verify();
+        verify(userRepository, never()).save(any(User.class));
+    }
 
-//         StepVerifier.create(authService.login("john@example.com", "wrong"))
-//                 .expectErrorMatches(e -> e instanceof RuntimeException &&
-//                         e.getMessage().equals("Invalid credentials"))
-//                 .verify();
-//     }
+    @Test
+    void login_shouldReturnUserWhenCredentialsMatch() {
+        when(userRepository.findByEmail(testUser.getEmail())).thenReturn(Mono.just(testUser));
+        when(passwordEncoder.matches("rawPassword", testUser.getPassword())).thenReturn(true);
+        StepVerifier.create(authService.login("john@example.com", "rawPassword"))
+                .expectNext(testUser)
+                .verifyComplete();
+    }
 
-//     @Test
-//     void login_shouldErrorWhenUserNotFound() {
-//         when(userRepository.findByEmail("missing@example.com")).thenReturn(Mono.empty());
+    @Test
+    void login_shouldErrorWhenPasswordDoesNotMatch() {
+        when(userRepository.findByEmail(testUser.getEmail())).thenReturn(Mono.just(testUser));
+        when(passwordEncoder.matches("wrong", testUser.getPassword())).thenReturn(false);
+        StepVerifier.create(authService.login("john@example.com", "wrong"))
+                .expectErrorMatches(e -> e instanceof RuntimeException &&
+                        e.getMessage().equals("Invalid credentials"))
+                .verify();
+    }
 
-//         StepVerifier.create(authService.login("missing@example.com", "whatever"))
-//                 .expectErrorMatches(e -> e instanceof RuntimeException &&
-//                         e.getMessage().equals("Invalid credentials"))
-//                 .verify();
-//     }
+    @Test
+    void login_shouldErrorWhenUserNotFound() {
+        when(userRepository.findByEmail("missing@example.com")).thenReturn(Mono.empty());
+        StepVerifier.create(authService.login("missing@example.com", "whatever"))
+                .expectErrorMatches(e -> e instanceof RuntimeException &&
+                        e.getMessage().equals("Invalid credentials"))
+                .verify();
+    }
 
-//     @Test
-//     void logout_shouldSaveBlacklistedToken() {
-//         UUID userId = UUID.randomUUID();
-//         when(blacklistedTokenRepository.save(any(BlacklistedToken.class)))
-//                 .thenReturn(Mono.just(BlacklistedToken.builder()
-//                         .token("token123")
-//                         .userId(userId)
-//                         .build()));
-
-//         StepVerifier.create(authService.logout("token123", userId))
-//                 .verifyComplete();
-
-//         verify(blacklistedTokenRepository).save(any(BlacklistedToken.class));
-//     }
-// }
+    @Test
+    void logout_shouldSaveBlacklistedToken() {
+        UUID userId = UUID.randomUUID();
+        when(blacklistedTokenRepository.save(any(BlacklistedToken.class)))
+                .thenReturn(Mono.just(BlacklistedToken.builder()
+                        .token("token123")
+                        .userId(userId)
+                        .build()));
+        StepVerifier.create(authService.logout("token123", userId))
+                .verifyComplete();
+        verify(blacklistedTokenRepository).save(any(BlacklistedToken.class));
+    }
+}
