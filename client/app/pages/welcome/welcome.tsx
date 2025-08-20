@@ -109,7 +109,7 @@ export function Welcome() {
                   });
 
                   return (
-                    <Form className="space-y-6">
+                    <Form className="space-y-6" aria-label="Sign In Form">
                       <FormController
                         formData={[
                           ...loginForm,
@@ -157,7 +157,7 @@ export function Welcome() {
                 });
 
                 return (
-                  <Form className="space-y-6">
+                  <Form className="space-y-6" aria-label="Sign Up Form">
                     <FormController
                       formData={[
                         ...registrationForm,

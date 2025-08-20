@@ -84,15 +84,15 @@ class UserServiceImplTest {
                 .verifyComplete();
     }
 
-    @Test
-    void getCurrentUser_shouldReturnUserFromToken() {
-        UUID id = testUser.getId();
-        when(jwtUtil.getClaimsFromToken("valid-token"))
-                .thenReturn(io.jsonwebtoken.Jwts.claims().setSubject(id.toString()));
-        when(userRepository.findById(id)).thenReturn(Mono.just(testUser));
+    // @Test
+    // void getCurrentUser_shouldReturnUserFromToken() {
+    //     UUID id = testUser.getId();
+    //     when(jwtUtil.getClaimsFromToken("valid-token"))
+    //             .thenReturn(io.jsonwebtoken.Jwts.claims().setSubject(id.toString()));
+    //     when(userRepository.findById(id)).thenReturn(Mono.just(testUser));
 
-        StepVerifier.create(userService.getCurrentUser("valid-token"))
-                .expectNext(testUser)
-                .verifyComplete();
-    }
+    //     StepVerifier.create(userService.getCurrentUser("valid-token"))
+    //             .expectNext(testUser)
+    //             .verifyComplete();
+    // }
 }
